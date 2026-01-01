@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter pub get)",
+      "Bash(flutter analyze)",
+      "Bash(flutter devices)",
+      "Bash(flutter run -d \"iPhone 17 Pro\")",
+      "Bash(flutter clean)",
+      "Bash(pkill -f flutter)",
+      "Bash(flutter test:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
