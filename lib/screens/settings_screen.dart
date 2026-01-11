@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../core/providers/settings_provider.dart';
 import '../core/theme/app_theme.dart';
 import 'about_mandalart_screen.dart';
@@ -14,16 +15,16 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('설정'),
+        title: Text('settings.title'.tr()),
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 12),
         children: [
-          _buildSectionHeader('외관'),
+          _buildSectionHeader('settings.appearance_section'.tr()),
           _buildSettingsTile(
             context,
             icon: Icons.palette_outlined,
-            title: '테마',
+            title: 'settings.theme_title'.tr(),
             subtitle: _getThemeModeText(settings.themeMode),
             onTap: () {
               Navigator.push(
@@ -35,12 +36,12 @@ class SettingsScreen extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 20),
-          _buildSectionHeader('정보'),
+          _buildSectionHeader('settings.info_section'.tr()),
           _buildSettingsTile(
             context,
             icon: Icons.help_outline_rounded,
-            title: '만다라트란?',
-            subtitle: '만다라트 사용법 알아보기',
+            title: 'settings.about_mandalart_title'.tr(),
+            subtitle: 'settings.about_mandalart_subtitle'.tr(),
             onTap: () {
               Navigator.push(
                 context,
@@ -53,8 +54,8 @@ class SettingsScreen extends ConsumerWidget {
           _buildSettingsTile(
             context,
             icon: Icons.info_outline_rounded,
-            title: '앱 버전',
-            subtitle: '1.0.0',
+            title: 'settings.app_version_title'.tr(),
+            subtitle: 'settings.app_version'.tr(),
             onTap: null,
           ),
         ],
@@ -136,6 +137,8 @@ class SettingsScreen extends ConsumerWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
         ),
+        splashColor: Colors.transparent,
+        hoverColor: Colors.transparent,
       ),
     );
   }
@@ -143,11 +146,11 @@ class SettingsScreen extends ConsumerWidget {
   String _getThemeModeText(ThemeMode mode) {
     switch (mode) {
       case ThemeMode.light:
-        return '라이트 모드';
+        return 'settings.theme_subtitle_light'.tr();
       case ThemeMode.dark:
-        return '다크 모드';
+        return 'settings.theme_subtitle_dark'.tr();
       case ThemeMode.system:
-        return '시스템 설정';
+        return 'settings.theme_subtitle_system'.tr();
     }
   }
 }

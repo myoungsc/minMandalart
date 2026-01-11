@@ -1,0 +1,77 @@
+{
+  "app": {
+    "title": "나의 목표"
+  },
+  "home": {
+    "empty_title": "아직 목표가 없습니다",
+    "empty_subtitle": "첫 번째 만다라트를 만들어\n목표 달성을 시작해보세요",
+    "error_title": "오류가 발생했습니다",
+    "new_goal_button": "새 목표",
+    "delete_dialog_title": "목표 삭제",
+    "delete_dialog_content": "정말로 이 목표를 삭제하시겠습니까?\n모든 세부 목표도 함께 삭제됩니다.",
+    "delete_button": "삭제",
+    "cancel_button": "취소",
+    "progress_label": "전체 진행률",
+    "completed_label": "완료",
+    "sub_goals_label": "세부 목표"
+  },
+  "editor": {
+    "new_board_title": "새 목표 만들기",
+    "edit_board_title": "목표 수정",
+    "done_button": "완료",
+    "center_goal_label": "중앙 목표",
+    "center_goal_hint": "예: 영어 회화 실력 향상",
+    "description_label": "설명 (선택사항)",
+    "description_hint": "목표에 대한 간단한 설명을 입력하세요",
+    "progress_label": "전체 진행률",
+    "add_icon": "추가",
+    "goal_description_label": "목표 설명",
+    "goal_saved": "새 목표가 생성되었습니다",
+    "goal_updated": "목표가 수정되었습니다",
+    "error_occurred": "오류가 발생했습니다",
+    "empty_goal_error": "중앙 목표를 입력해주세요",
+    "board_load_error": "보드를 불러올 수 없습니다",
+    "goal_dialog_title_new": "새 목표 추가",
+    "goal_dialog_title_edit": "목표 수정",
+    "goal_title_label": "목표 제목",
+    "goal_title_hint": "예: 매일 1시간 공부",
+    "goal_description_hint": "세부 내용을 입력하세요",
+    "goal_progress_label": "진행률",
+    "completed_badge": "완료"
+  },
+  "settings": {
+    "title": "설정",
+    "appearance_section": "외관",
+    "theme_title": "테마",
+    "theme_subtitle_light": "라이트 모드",
+    "theme_subtitle_dark": "다크 모드",
+    "theme_subtitle_system": "시스템 설정",
+    "info_section": "정보",
+    "about_mandalart_title": "만다라트란?",
+    "about_mandalart_subtitle": "만다라트 사용법 알아보기",
+    "app_version_title": "앱 버전",
+    "app_version": "1.0.0"
+  },
+  "theme": {
+    "title": "테마 설정",
+    "light_mode": "라이트 모드",
+    "light_mode_desc": "밝은 화면으로 표시",
+    "dark_mode": "다크 모드",
+    "dark_mode_desc": "어두운 화면으로 표시",
+    "system_mode": "시스템 설정",
+    "system_mode_desc": "기기 설정을 따라감"
+  },
+  "about": {
+    "title": "만다라트란?",
+    "mandalart_name": "만다라트",
+    "description1": "만다라트는 일본의 디자이너 이마이즈미 히로아키가 개발한 목표 달성 도구입니다.",
+    "description2": "메이저리그 야구선수 오타니 쇼헤이가 고등학교 시절 만다라트를 활용하여 목표를 체계적으로 관리한 것으로 유명합니다.",
+    "how_to_use": "사용법",
+    "step1": "중앙에 달성하고 싶은 목표를 작성합니다",
+    "step2": "주변 8칸에 목표 달성을 위한 핵심 요소를 작성합니다",
+    "step3": "각 요소별로 구체적인 실행 방법을 작성합니다",
+    "step4": "진행 상황을 체크하며 목표를 달성합니다",
+    "mini_title": "미니 만다라트",
+    "mini_description": "이 앱에서는 3x3 형태의 미니 만다라트를 제공합니다. 중앙에 핵심 목표를 배치하고, 주변 8칸에 이를 달성하기 위한 세부 목표를 작성하세요. 간단하고 집중적인 형태로 목표를 관리할 수 있습니다."
+  }
+}

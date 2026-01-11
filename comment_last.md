@@ -67,3 +67,38 @@
 
 ## 2026-01-01 23:45:02
 - frontend-design skill을 사용해서 전체적인 UI/UX 디자인 개선
+
+## 2026-01-02 12:44:09
+- 홈 화면 메인 카드의 전체 진행률 섹션에 테두리 추가 (라이트 모드 가독성 개선)
+- 모든 AlertDialog의 좌우 마진을 25px로 통일
+- 만다라트 상세 화면에 목표 수정 기능 추가 (AppBar 연필 아이콘)
+- 새 목표 만들기 화면을 수정 모드로도 사용할 수 있도록 분기 처리
+
+## 2026-01-02 13:05:00
+- 모든 카드와 버튼의 클릭/터치 효과 제거 (splashColor, highlightColor, overlayColor를 transparent로 설정)
+
+## 2026-01-02 13:10:00
+- easy_localization을 이용한 다국어 지원 추가
+- 지원 언어: 영어(기본), 한국어, 일본어, 스페인어, 러시아어, 프랑스어
+- 시스템 언어에 따라 자동으로 언어 선택
+
+## 2026-01-02 13:20:29
+- home_screen.dart 파일의 모든 하드코딩된 텍스트를 easy_localization의 tr() 함수를 사용한 다국어 키로 변경
+
+## 2026-01-02 15:02:20
+- theme_settings_screen.dart 파일의 모든 하드코딩된 텍스트를 easy_localization의 tr() 함수를 사용한 다국어 키로 변경
+
+## 2026-01-02 15:02:24
+- about_mandalart_screen.dart 파일의 모든 하드코딩된 텍스트를 easy_localization의 tr() 함수를 사용한 다국어 키로 변경
+## 2026-01-02 14:49:28
+- settings_screen.dart 파일의 모든 하드코딩된 텍스트를 easy_localization의 tr() 함수를 사용한 다국어 키로 변경
+
+## 2026-01-03 14:49:23
+- mandalart_editor.dart 파일의 모든 하드코딩된 텍스트를 easy_localization의 tr() 함수를 사용한 다국어 키로 변경
+
+## 2026-01-03 15:10:00
+- 모든 화면 파일의 다국어 처리 완료
+- flutter analyze 통과 확인
+- 6개 언어(영어, 한국어, 일본어, 스페인어, 러시아어, 프랑스어) 완전 지원
+- 시스템 언어 설정에 따라 자동으로 언어 변경
+

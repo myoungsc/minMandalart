@@ -1,0 +1,77 @@
+{
+  "app": {
+    "title": "My Goals"
+  },
+  "home": {
+    "empty_title": "No goals yet",
+    "empty_subtitle": "Create your first Mandalart\nto start achieving your goals",
+    "error_title": "An error occurred",
+    "new_goal_button": "New Goal",
+    "delete_dialog_title": "Delete Goal",
+    "delete_dialog_content": "Are you sure you want to delete this goal?\nAll sub-goals will also be deleted.",
+    "delete_button": "Delete",
+    "cancel_button": "Cancel",
+    "progress_label": "Overall Progress",
+    "completed_label": "Completed",
+    "sub_goals_label": "Sub Goals"
+  },
+  "editor": {
+    "new_board_title": "Create New Goal",
+    "edit_board_title": "Edit Goal",
+    "done_button": "Done",
+    "center_goal_label": "Central Goal",
+    "center_goal_hint": "e.g., Improve English conversation skills",
+    "description_label": "Description (Optional)",
+    "description_hint": "Enter a brief description of your goal",
+    "progress_label": "Overall Progress",
+    "add_icon": "Add",
+    "goal_description_label": "Goal Description",
+    "goal_saved": "New goal has been created",
+    "goal_updated": "Goal has been updated",
+    "error_occurred": "An error occurred",
+    "empty_goal_error": "Please enter a central goal",
+    "board_load_error": "Unable to load board",
+    "goal_dialog_title_new": "Add New Goal",
+    "goal_dialog_title_edit": "Edit Goal",
+    "goal_title_label": "Goal Title",
+    "goal_title_hint": "e.g., Study 1 hour every day",
+    "goal_description_hint": "Enter details",
+    "goal_progress_label": "Progress",
+    "completed_badge": "Done"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance_section": "Appearance",
+    "theme_title": "Theme",
+    "theme_subtitle_light": "Light Mode",
+    "theme_subtitle_dark": "Dark Mode",
+    "theme_subtitle_system": "System Default",
+    "info_section": "Information",
+    "about_mandalart_title": "What is Mandalart?",
+    "about_mandalart_subtitle": "Learn how to use Mandalart",
+    "app_version_title": "App Version",
+    "app_version": "1.0.0"
+  },
+  "theme": {
+    "title": "Theme Settings",
+    "light_mode": "Light Mode",
+    "light_mode_desc": "Display in bright screen",
+    "dark_mode": "Dark Mode",
+    "dark_mode_desc": "Display in dark screen",
+    "system_mode": "System Default",
+    "system_mode_desc": "Follow device settings"
+  },
+  "about": {
+    "title": "What is Mandalart?",
+    "mandalart_name": "Mandalart",
+    "description1": "Mandalart is a goal achievement tool developed by Japanese designer Hiroaki Imaizumi.",
+    "description2": "Major League Baseball player Shohei Ohtani is famous for systematically managing his goals using Mandalart during his high school years.",
+    "how_to_use": "How to Use",
+    "step1": "Write your goal in the center",
+    "step2": "Write 8 key elements to achieve the goal in surrounding cells",
+    "step3": "Write specific action plans for each element",
+    "step4": "Track progress and achieve your goal",
+    "mini_title": "Mini Mandalart",
+    "mini_description": "This app provides a 3x3 mini Mandalart format. Place your core goal in the center and write sub-goals in the surrounding 8 cells to achieve it. You can manage your goals in a simple and focused manner."
+  }
+}

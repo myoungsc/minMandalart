@@ -8,7 +8,8 @@
       "Bash(flutter clean)",
       "Bash(pkill -f flutter)",
       "Bash(flutter test:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(TZ='Asia/Seoul' date:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,77 @@
+{
+  "app": {
+    "title": "Mis Objetivos"
+  },
+  "home": {
+    "empty_title": "Aún no hay objetivos",
+    "empty_subtitle": "Crea tu primer Mandalart\npara comenzar a alcanzar tus metas",
+    "error_title": "Ha ocurrido un error",
+    "new_goal_button": "Nuevo Objetivo",
+    "delete_dialog_title": "Eliminar Objetivo",
+    "delete_dialog_content": "¿Estás seguro de que deseas eliminar este objetivo?\nTodos los subobjetivos también se eliminarán.",
+    "delete_button": "Eliminar",
+    "cancel_button": "Cancelar",
+    "progress_label": "Progreso General",
+    "completed_label": "Completado",
+    "sub_goals_label": "Subobjetivos"
+  },
+  "editor": {
+    "new_board_title": "Crear Nuevo Objetivo",
+    "edit_board_title": "Editar Objetivo",
+    "done_button": "Listo",
+    "center_goal_label": "Objetivo Central",
+    "center_goal_hint": "ej: Mejorar habilidades de conversación en inglés",
+    "description_label": "Descripción (Opcional)",
+    "description_hint": "Ingresa una breve descripción de tu objetivo",
+    "progress_label": "Progreso General",
+    "add_icon": "Añadir",
+    "goal_description_label": "Descripción del Objetivo",
+    "goal_saved": "Se ha creado un nuevo objetivo",
+    "goal_updated": "El objetivo ha sido actualizado",
+    "error_occurred": "Ha ocurrido un error",
+    "empty_goal_error": "Por favor ingresa un objetivo central",
+    "board_load_error": "No se puede cargar el tablero",
+    "goal_dialog_title_new": "Añadir Nuevo Objetivo",
+    "goal_dialog_title_edit": "Editar Objetivo",
+    "goal_title_label": "Título del Objetivo",
+    "goal_title_hint": "ej: Estudiar 1 hora todos los días",
+    "goal_description_hint": "Ingresa los detalles",
+    "goal_progress_label": "Progreso",
+    "completed_badge": "Hecho"
+  },
+  "settings": {
+    "title": "Configuración",
+    "appearance_section": "Apariencia",
+    "theme_title": "Tema",
+    "theme_subtitle_light": "Modo Claro",
+    "theme_subtitle_dark": "Modo Oscuro",
+    "theme_subtitle_system": "Predeterminado del Sistema",
+    "info_section": "Información",
+    "about_mandalart_title": "¿Qué es Mandalart?",
+    "about_mandalart_subtitle": "Aprende a usar Mandalart",
+    "app_version_title": "Versión de la App",
+    "app_version": "1.0.0"
+  },
+  "theme": {
+    "title": "Configuración de Tema",
+    "light_mode": "Modo Claro",
+    "light_mode_desc": "Mostrar en pantalla brillante",
+    "dark_mode": "Modo Oscuro",
+    "dark_mode_desc": "Mostrar en pantalla oscura",
+    "system_mode": "Predeterminado del Sistema",
+    "system_mode_desc": "Seguir configuración del dispositivo"
+  },
+  "about": {
+    "title": "¿Qué es Mandalart?",
+    "mandalart_name": "Mandalart",
+    "description1": "Mandalart es una herramienta de logro de objetivos desarrollada por el diseñador japonés Hiroaki Imaizumi.",
+    "description2": "El jugador de béisbol de Grandes Ligas Shohei Ohtani es famoso por usar Mandalart para gestionar sistemáticamente sus objetivos durante su época de escuela secundaria.",
+    "how_to_use": "Cómo Usar",
+    "step1": "Escribe tu objetivo en el centro",
+    "step2": "Escribe 8 elementos clave para lograr el objetivo en las celdas circundantes",
+    "step3": "Escribe planes de acción específicos para cada elemento",
+    "step4": "Rastrea el progreso y alcanza tu objetivo",
+    "mini_title": "Mini Mandalart",
+    "mini_description": "Esta aplicación proporciona un formato de Mini Mandalart 3x3. Coloca tu objetivo principal en el centro y escribe subobjetivos en las 8 celdas circundantes para lograrlo. Puedes gestionar tus objetivos de manera simple y enfocada."
+  }
+}

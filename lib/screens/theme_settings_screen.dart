@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../core/providers/settings_provider.dart';
 import '../core/theme/app_theme.dart';
 
@@ -12,7 +13,7 @@ class ThemeSettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('테마 설정'),
+        title: Text('theme.title'.tr()),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -21,8 +22,8 @@ class ThemeSettingsScreen extends ConsumerWidget {
             context,
             ref,
             icon: Icons.light_mode_outlined,
-            title: '라이트 모드',
-            description: '밝은 화면으로 표시',
+            title: 'theme.light_mode'.tr(),
+            description: 'theme.light_mode_desc'.tr(),
             themeMode: ThemeMode.light,
             isSelected: settings.themeMode == ThemeMode.light,
           ),
@@ -31,8 +32,8 @@ class ThemeSettingsScreen extends ConsumerWidget {
             context,
             ref,
             icon: Icons.dark_mode_outlined,
-            title: '다크 모드',
-            description: '어두운 화면으로 표시',
+            title: 'theme.dark_mode'.tr(),
+            description: 'theme.dark_mode_desc'.tr(),
             themeMode: ThemeMode.dark,
             isSelected: settings.themeMode == ThemeMode.dark,
           ),
@@ -41,8 +42,8 @@ class ThemeSettingsScreen extends ConsumerWidget {
             context,
             ref,
             icon: Icons.settings_suggest_outlined,
-            title: '시스템 설정',
-            description: '기기 설정을 따라감',
+            title: 'theme.system_mode'.tr(),
+            description: 'theme.system_mode_desc'.tr(),
             themeMode: ThemeMode.system,
             isSelected: settings.themeMode == ThemeMode.system,
           ),
@@ -70,6 +71,9 @@ class ThemeSettingsScreen extends ConsumerWidget {
           ref.read(settingsProvider.notifier).setThemeMode(themeMode);
         },
         borderRadius: BorderRadius.circular(16),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
         child: Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(

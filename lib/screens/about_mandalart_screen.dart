@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../core/theme/app_theme.dart';
 
 class AboutMandalartScreen extends StatelessWidget {
@@ -8,7 +9,7 @@ class AboutMandalartScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('만다라트란?'),
+        title: Text('about.title'.tr()),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -50,9 +51,9 @@ class AboutMandalartScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        '만다라트',
-                        style: TextStyle(
+                      Text(
+                        'about.mandalart_name'.tr(),
+                        style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.5,
@@ -61,18 +62,18 @@ class AboutMandalartScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    '만다라트는 일본의 디자이너 이마이즈미 히로아키가 개발한 목표 달성 도구입니다.',
-                    style: TextStyle(
+                  Text(
+                    'about.description1'.tr(),
+                    style: const TextStyle(
                       fontSize: 16,
                       height: 1.7,
                       letterSpacing: -0.2,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    '메이저리그 야구선수 오타니 쇼헤이가 고등학교 시절 만다라트를 활용하여 목표를 체계적으로 관리한 것으로 유명합니다.',
-                    style: TextStyle(
+                  Text(
+                    'about.description2'.tr(),
+                    style: const TextStyle(
                       fontSize: 16,
                       height: 1.7,
                       letterSpacing: -0.2,
@@ -93,9 +94,9 @@ class AboutMandalartScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Text(
-                  '사용법',
-                  style: TextStyle(
+                Text(
+                  'about.how_to_use'.tr(),
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.5,
@@ -107,28 +108,28 @@ class AboutMandalartScreen extends StatelessWidget {
             _buildStep(
               context,
               '1',
-              '중앙에 달성하고 싶은 목표를 작성합니다',
+              'about.step1'.tr(),
               Icons.flag_outlined,
             ),
             const SizedBox(height: 14),
             _buildStep(
               context,
               '2',
-              '주변 8칸에 목표 달성을 위한 핵심 요소를 작성합니다',
+              'about.step2'.tr(),
               Icons.grid_4x4_outlined,
             ),
             const SizedBox(height: 14),
             _buildStep(
               context,
               '3',
-              '각 요소별로 구체적인 실행 방법을 작성합니다',
+              'about.step3'.tr(),
               Icons.edit_note_outlined,
             ),
             const SizedBox(height: 14),
             _buildStep(
               context,
               '4',
-              '진행 상황을 체크하며 목표를 달성합니다',
+              'about.step4'.tr(),
               Icons.check_circle_outline_rounded,
             ),
             const SizedBox(height: 28),
@@ -160,7 +161,7 @@ class AboutMandalartScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        '미니 만다라트',
+                        'about.mini_title'.tr(),
                         style: TextStyle(
                           fontSize: 19,
                           fontWeight: FontWeight.w800,
@@ -171,11 +172,9 @@ class AboutMandalartScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 14),
-                  const Text(
-                    '이 앱에서는 3x3 형태의 미니 만다라트를 제공합니다. '
-                    '중앙에 핵심 목표를 배치하고, 주변 8칸에 이를 달성하기 위한 '
-                    '세부 목표를 작성하세요. 간단하고 집중적인 형태로 목표를 관리할 수 있습니다.',
-                    style: TextStyle(
+                  Text(
+                    'about.mini_description'.tr(),
+                    style: const TextStyle(
                       fontSize: 16,
                       height: 1.7,
                       letterSpacing: -0.2,

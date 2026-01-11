@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:easy_localization/easy_localization.dart' as ez;
 import '../core/providers/goal_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../models/goal_model.dart';
@@ -15,7 +16,7 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('나의 목표'),
+        title: Text('app.title'.tr()),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -75,7 +76,7 @@ class HomeScreen extends ConsumerWidget {
           }
         },
         icon: const Icon(Icons.add_rounded),
-        label: const Text('새 목표'),
+        label: Text('home.new_goal_button'.tr()),
       ),
     );
   }
@@ -98,9 +99,9 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            '아직 목표가 없습니다',
-            style: TextStyle(
+          Text(
+            'home.empty_title'.tr(),
+            style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.5,
@@ -108,9 +109,9 @@ class HomeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '첫 번째 만다라트를 만들어\n목표 달성을 시작해보세요',
+            'home.empty_subtitle'.tr(),
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 16,
               color: AppTheme.textSecondary,
               height: 1.5,
@@ -139,9 +140,9 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            '오류가 발생했습니다',
-            style: TextStyle(
+          Text(
+            'home.error_title'.tr(),
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
             ),
@@ -167,19 +168,23 @@ class HomeScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('목표 삭제'),
-        content: const Text('정말로 이 목표를 삭제하시겠습니까?\n모든 세부 목표도 함께 삭제됩니다.'),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 25),
+        title: Text('home.delete_dialog_title'.tr()),
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width - 50,
+          child: Text('home.delete_dialog_content'.tr()),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
+            child: Text('home.cancel_button'.tr()),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: AppTheme.errorColor,
             ),
-            child: const Text('삭제'),
+            child: Text('home.delete_button'.tr()),
           ),
         ],
       ),
@@ -216,6 +221,9 @@ class _MandalartBoardCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(16),
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
@@ -298,6 +306,10 @@ class _MandalartBoardCard extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: AppTheme.backgroundLight,
+                    border: Border.all(
+                      color: AppTheme.textDisabled.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
                     borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(16),
                       bottomRight: Radius.circular(16),
@@ -315,9 +327,9 @@ class _MandalartBoardCard extends StatelessWidget {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text(
-                                      '전체 진행률',
-                                      style: TextStyle(
+                                    Text(
+                                      'home.progress_label'.tr(),
+                                      style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                         color: AppTheme.textSecondary,
@@ -357,14 +369,14 @@ class _MandalartBoardCard extends StatelessWidget {
                         children: [
                           _buildStatChip(
                             icon: Icons.check_circle_outline_rounded,
-                            label: '완료',
+                            label: 'home.completed_label'.tr(),
                             value: '$completedGoals/8',
                             color: AppTheme.successColor,
                           ),
                           const SizedBox(width: 8),
                           _buildStatChip(
                             icon: Icons.flag_outlined,
-                            label: '세부 목표',
+                            label: 'home.sub_goals_label'.tr(),
                             value: '${board.subGoals.where((g) => g.title.isNotEmpty).length}',
                             color: AppTheme.infoColor,
                           ),

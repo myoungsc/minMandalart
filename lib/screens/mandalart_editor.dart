@@ -1,13 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../core/providers/goal_provider.dart';
 import '../models/goal_model.dart';
 
 class MandalartEditor extends ConsumerStatefulWidget {
   final bool isNewBoard;
+  final bool isEditMode;
 
-  const MandalartEditor({super.key, this.isNewBoard = false});
+  const MandalartEditor({
+    super.key,
+    this.isNewBoard = false,
+    this.isEditMode = false,
+  });
 
   @override
   ConsumerState<MandalartEditor> createState() => _MandalartEditorState();
@@ -20,7 +26,7 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
   @override
   void initState() {
     super.initState();
-    if (!widget.isNewBoard) {
+    if (!widget.isNewBoard || widget.isEditMode) {
       final board = ref.read(currentBoardProvider);
       if (board != null) {
         _centerGoalController.text = board.centerGoal;
@@ -40,44 +46,71 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
     if (_centerGoalController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('중앙 목표를 입력해주세요')));
+      ).showSnackBar(SnackBar(content: Text('editor.empty_goal_error'.tr())));
       return;
     }
 
-    final board = MandalartBoard(
-      centerGoal: _centerGoalController.text.trim(),
-      description: _descriptionController.text.trim().isNotEmpty
-          ? _descriptionController.text.trim()
-          : null,
-      createdAt: DateTime.now(),
-    );
-
     try {
       final db = ref.read(databaseProvider);
-      final boardId = await db.createMandalartBoard(board);
 
-      // Create empty goals for 8 positions (3x3 grid with center)
-      for (int i = 0; i < 8; i++) {
-        final goal = Goal(
-          title: '',
-          parentId: boardId,
-          position: i,
+      if (widget.isEditMode) {
+        // 수정 모드
+        final currentBoard = ref.read(currentBoardProvider);
+        if (currentBoard?.id == null) return;
+
+        final updatedBoard = currentBoard!.copyWith(
+          centerGoal: _centerGoalController.text.trim(),
+          description: _descriptionController.text.trim().isNotEmpty
+              ? _descriptionController.text.trim()
+              : null,
+        );
+
+        await db.updateMandalartBoard(updatedBoard);
+        await ref
+            .read(currentBoardProvider.notifier)
+            .loadBoard(currentBoard.id!);
+
+        if (mounted) {
+          Navigator.pop(context, true);
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('editor.goal_updated'.tr())));
+        }
+      } else {
+        // 새로 만들기 모드
+        final board = MandalartBoard(
+          centerGoal: _centerGoalController.text.trim(),
+          description: _descriptionController.text.trim().isNotEmpty
+              ? _descriptionController.text.trim()
+              : null,
           createdAt: DateTime.now(),
         );
-        await db.createGoal(goal);
-      }
 
-      if (mounted) {
-        Navigator.pop(context, true);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('새 목표가 생성되었습니다')));
+        final boardId = await db.createMandalartBoard(board);
+
+        // Create empty goals for 8 positions (3x3 grid with center)
+        for (int i = 0; i < 8; i++) {
+          final goal = Goal(
+            title: '',
+            parentId: boardId,
+            position: i,
+            createdAt: DateTime.now(),
+          );
+          await db.createGoal(goal);
+        }
+
+        if (mounted) {
+          Navigator.pop(context, true);
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('editor.goal_saved'.tr())));
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('오류가 발생했습니다: $e')));
+        ).showSnackBar(SnackBar(content: Text('${'editor.error_occurred'.tr()}: $e')));
       }
     }
   }
@@ -86,14 +119,14 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
   Widget build(BuildContext context) {
     final currentBoard = ref.watch(currentBoardProvider);
 
-    if (widget.isNewBoard) {
+    if (widget.isNewBoard || widget.isEditMode) {
       return _buildNewBoardForm();
     }
 
     if (currentBoard == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('만다라트')),
-        body: const Center(child: Text('보드를 불러올 수 없습니다')),
+        appBar: AppBar(title: Text('app.title'.tr())),
+        body: Center(child: Text('editor.board_load_error'.tr())),
       );
     }
 
@@ -103,12 +136,12 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
   Widget _buildNewBoardForm() {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('새 목표 만들기'),
+        title: Text(widget.isEditMode ? 'editor.edit_board_title'.tr() : 'editor.new_board_title'.tr()),
         actions: [
           TextButton.icon(
             onPressed: _saveBoard,
             icon: const Icon(Icons.check_rounded, size: 20),
-            label: const Text('완료'),
+            label: Text('editor.done_button'.tr()),
           ),
         ],
       ),
@@ -117,9 +150,9 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '중앙 목표',
-              style: TextStyle(
+            Text(
+              'editor.center_goal_label'.tr(),
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.3,
@@ -128,17 +161,17 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
             const SizedBox(height: 12),
             TextField(
               controller: _centerGoalController,
-              decoration: const InputDecoration(
-                hintText: '예: 영어 회화 실력 향상',
-                prefixIcon: Icon(Icons.flag_outlined),
+              decoration: InputDecoration(
+                hintText: 'editor.center_goal_hint'.tr(),
+                prefixIcon: const Icon(Icons.flag_outlined),
               ),
               maxLines: 1,
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 28),
-            const Text(
-              '설명 (선택사항)',
-              style: TextStyle(
+            Text(
+              'editor.description_label'.tr(),
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.3,
@@ -147,9 +180,9 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
             const SizedBox(height: 12),
             TextField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
-                hintText: '목표에 대한 간단한 설명을 입력하세요',
-                prefixIcon: Icon(Icons.description_outlined),
+              decoration: InputDecoration(
+                hintText: 'editor.description_hint'.tr(),
+                prefixIcon: const Icon(Icons.description_outlined),
               ),
               maxLines: 4,
               style: const TextStyle(fontSize: 15),
@@ -165,11 +198,26 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
       appBar: AppBar(
         title: Text(
           board.centerGoal,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MandalartEditor(isEditMode: true),
+                ),
+              );
+
+              if (result == true && mounted) {
+                // 수정 후 홈 화면 목록도 업데이트
+                ref.read(mandalartBoardsProvider.notifier).loadBoards();
+              }
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -180,15 +228,21 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                    Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.1),
+                    Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.05),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -197,9 +251,9 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        '전체 진행률',
-                        style: TextStyle(
+                      Text(
+                        'editor.progress_label'.tr(),
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           letterSpacing: -0.3,
@@ -260,10 +314,14 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.secondaryContainer.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.secondary.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
@@ -279,7 +337,7 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '목표 설명',
+                          'editor.goal_description_label'.tr(),
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -357,19 +415,28 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
     return InkWell(
       onTap: () => _editGoal(goal, position),
       borderRadius: BorderRadius.circular(14),
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      overlayColor: WidgetStateProperty.all(Colors.transparent),
       child: Container(
         decoration: BoxDecoration(
           color: hasContent
               ? (isCompleted
-                  ? Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3)
-                  : Theme.of(context).colorScheme.surface)
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.secondaryContainer.withValues(alpha: 0.3)
+                    : Theme.of(context).colorScheme.surface)
               : Theme.of(context).scaffoldBackgroundColor,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: hasContent
                 ? (isCompleted
-                    ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5)
-                    : Theme.of(context).colorScheme.primary.withValues(alpha: 0.3))
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.secondary.withValues(alpha: 0.5)
+                      : Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.3))
                 : Colors.grey.withValues(alpha: 0.25),
             width: isCompleted ? 2 : 1.5,
           ),
@@ -396,8 +463,12 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
                           fontWeight: FontWeight.w600,
                           height: 1.3,
                           letterSpacing: -0.2,
-                          decoration: isCompleted ? TextDecoration.lineThrough : null,
-                          decorationColor: Theme.of(context).colorScheme.secondary,
+                          decoration: isCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
+                          decorationColor: Theme.of(
+                            context,
+                          ).colorScheme.secondary,
                           decorationThickness: 2,
                         ),
                         textAlign: TextAlign.center,
@@ -427,17 +498,18 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: (isCompleted
-                                ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context).colorScheme.primary)
-                            .withValues(alpha: 0.3),
+                        color:
+                            (isCompleted
+                                    ? Theme.of(context).colorScheme.secondary
+                                    : Theme.of(context).colorScheme.primary)
+                                .withValues(alpha: 0.3),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                   child: Text(
-                    isCompleted ? '완료' : '$progress%',
+                    isCompleted ? 'editor.completed_badge'.tr() : '$progress%',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -493,7 +565,7 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('오류가 발생했습니다: $e')));
+        ).showSnackBar(SnackBar(content: Text('${'editor.error_occurred'.tr()}: $e')));
       }
       return null;
     }
@@ -606,7 +678,7 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
     final progress = int.tryParse(progressController.text) ?? 0;
 
     return AlertDialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 25),
       contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
       title: Row(
         children: [
@@ -617,59 +689,48 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
             size: 24,
           ),
           const SizedBox(width: 10),
-          Text(
-            widget.goal?.title.isNotEmpty == true ? '목표 수정' : '새 목표 추가',
-          ),
+          Text(widget.goal?.title.isNotEmpty == true ? 'editor.goal_dialog_title_edit'.tr() : 'editor.goal_dialog_title_new'.tr()),
         ],
       ),
       content: SizedBox(
-        width: MediaQuery.of(context).size.width - 40,
+        width: MediaQuery.of(context).size.width - 50,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '목표 제목',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+              Text(
+                'editor.goal_title_label'.tr(),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: titleController,
-                decoration: const InputDecoration(
-                  hintText: '예: 매일 1시간 공부',
-                  prefixIcon: Icon(Icons.flag_outlined, size: 20),
+                decoration: InputDecoration(
+                  hintText: 'editor.goal_title_hint'.tr(),
+                  prefixIcon: const Icon(Icons.flag_outlined, size: 20),
                 ),
                 style: const TextStyle(fontSize: 15),
               ),
               const SizedBox(height: 20),
-              const Text(
-                '설명 (선택사항)',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+              Text(
+                'editor.description_label'.tr(),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: descriptionController,
-                decoration: const InputDecoration(
-                  hintText: '세부 내용을 입력하세요',
-                  prefixIcon: Icon(Icons.description_outlined, size: 20),
+                decoration: InputDecoration(
+                  hintText: 'editor.goal_description_hint'.tr(),
+                  prefixIcon: const Icon(Icons.description_outlined, size: 20),
                 ),
                 maxLines: 3,
                 style: const TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 20),
-              const Text(
-                '진행률',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+              Text(
+                'editor.goal_progress_label'.tr(),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 10),
               Row(
@@ -696,10 +757,9 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primaryContainer
-                          .withValues(alpha: 0.3),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -722,7 +782,7 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
         TextButton.icon(
           onPressed: () => Navigator.pop(context, false),
           icon: const Icon(Icons.check_rounded, size: 18),
-          label: const Text('완료'),
+          label: Text('editor.done_button'.tr()),
         ),
       ],
     );
