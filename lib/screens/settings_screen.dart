@@ -17,9 +17,10 @@ class SettingsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text('settings.title'.tr()),
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        children: [
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          children: [
           _buildSectionHeader('settings.appearance_section'.tr()),
           _buildSettingsTile(
             context,
@@ -58,7 +59,8 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: 'settings.app_version'.tr(),
             onTap: null,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

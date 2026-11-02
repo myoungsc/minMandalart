@@ -221,5 +221,26 @@ void main() {
       expect(updatedBoard.id, 1);
       expect(updatedBoard.createdAt, now);
     });
+
+    test('copyWith는 description을 명시적 null로 지우고, 생략하면 유지한다', () {
+      final now = DateTime.now();
+      final board = MandalartBoard(
+        centerGoal: '중앙 목표',
+        description: '보드 설명',
+        createdAt: now,
+      );
+      final goal = Goal(
+        title: '목표',
+        description: '목표 설명',
+        parentId: 1,
+        position: 0,
+        createdAt: now,
+      );
+
+      expect(board.copyWith(description: null).description, isNull);
+      expect(board.copyWith(centerGoal: '수정').description, '보드 설명');
+      expect(goal.copyWith(description: null).description, isNull);
+      expect(goal.copyWith(title: '수정').description, '목표 설명');
+    });
   });
 }

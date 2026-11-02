@@ -1,3 +1,6 @@
+// copyWith에서 "생략"과 "null로 지우기"를 구분하는 값
+const Object _unset = Object();
+
 class Goal {
   final int? id;
   final String title;
@@ -54,7 +57,7 @@ class Goal {
   Goal copyWith({
     int? id,
     String? title,
-    String? description,
+    Object? description = _unset,
     int? parentId,
     int? position,
     bool? isCompleted,
@@ -65,7 +68,9 @@ class Goal {
     return Goal(
       id: id ?? this.id,
       title: title ?? this.title,
-      description: description ?? this.description,
+      description: identical(description, _unset)
+          ? this.description
+          : description as String?,
       parentId: parentId ?? this.parentId,
       position: position ?? this.position,
       isCompleted: isCompleted ?? this.isCompleted,
@@ -119,7 +124,7 @@ class MandalartBoard {
   MandalartBoard copyWith({
     int? id,
     String? centerGoal,
-    String? description,
+    Object? description = _unset,
     DateTime? createdAt,
     DateTime? updatedAt,
     List<Goal>? subGoals,
@@ -127,7 +132,9 @@ class MandalartBoard {
     return MandalartBoard(
       id: id ?? this.id,
       centerGoal: centerGoal ?? this.centerGoal,
-      description: description ?? this.description,
+      description: identical(description, _unset)
+          ? this.description
+          : description as String?,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       subGoals: subGoals ?? this.subGoals,

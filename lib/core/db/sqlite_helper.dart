@@ -21,6 +21,8 @@ class SQLiteHelper {
     return await openDatabase(
       path,
       version: 1,
+      // SQLite는 연결마다 외래 키가 꺼져 있어 켜야 ON DELETE CASCADE가 동작함
+      onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: _createDB,
     );
   }

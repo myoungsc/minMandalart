@@ -11,11 +11,12 @@ class AboutMandalartScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('about.title'.tr()),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -183,7 +184,8 @@ class AboutMandalartScreen extends StatelessWidget {
                 ],
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

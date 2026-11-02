@@ -26,41 +26,43 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: boardsAsync.when(
-        data: (boards) {
-          if (boards.isEmpty) {
-            return _buildEmptyState(context);
-          }
+      body: SafeArea(
+        child: boardsAsync.when(
+          data: (boards) {
+            if (boards.isEmpty) {
+              return _buildEmptyState(context);
+            }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(20),
-            itemCount: boards.length,
-            itemBuilder: (context, index) {
-              final board = boards[index];
-              return _MandalartBoardCard(
-                board: board,
-                onTap: () async {
-                  if (board.id != null) {
-                    await ref
-                        .read(currentBoardProvider.notifier)
-                        .loadBoard(board.id!);
-                  }
-                  if (context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MandalartEditor(),
-                      ),
-                    );
-                  }
-                },
-                onDelete: () => _confirmDelete(context, ref, board),
-              );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _buildErrorState(error),
+            return ListView.builder(
+              padding: const EdgeInsets.all(20),
+              itemCount: boards.length,
+              itemBuilder: (context, index) {
+                final board = boards[index];
+                return _MandalartBoardCard(
+                  board: board,
+                  onTap: () async {
+                    if (board.id != null) {
+                      await ref
+                          .read(currentBoardProvider.notifier)
+                          .loadBoard(board.id!);
+                    }
+                    if (context.mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MandalartEditor(),
+                        ),
+                      );
+                    }
+                  },
+                  onDelete: () => _confirmDelete(context, ref, board),
+                );
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => _buildErrorState(error),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {

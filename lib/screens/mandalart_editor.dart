@@ -145,11 +145,12 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Text(
               'editor.center_goal_label'.tr(),
               style: const TextStyle(
@@ -167,6 +168,8 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
               ),
               maxLines: 1,
               style: const TextStyle(fontSize: 16),
+              enableSuggestions: false,
+              autocorrect: false,
             ),
             const SizedBox(height: 28),
             Text(
@@ -186,8 +189,11 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
               ),
               maxLines: 4,
               style: const TextStyle(fontSize: 15),
+              enableSuggestions: false,
+              autocorrect: false,
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -219,10 +225,11 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -361,6 +368,7 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
               ),
             ],
           ],
+          ),
         ),
       ),
     );
@@ -535,15 +543,17 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
     final currentBoard = ref.read(currentBoardProvider);
     if (currentBoard?.id == null) return null;
 
-    if (title.isEmpty) return goal?.id;
+    // 제목이 없으면 빈 칸: 저장된 칸은 내용과 진행률까지 비우고, 새 칸은 만들지 않음
+    final isEmptyCell = title.isEmpty;
+    if (isEmptyCell && goal?.id == null) return null;
 
     final updatedGoal = Goal(
       id: goal?.id,
       title: title,
-      description: description.isNotEmpty ? description : null,
+      description: !isEmptyCell && description.isNotEmpty ? description : null,
       parentId: currentBoard!.id!,
       position: position,
-      progress: progress.clamp(0, 100),
+      progress: isEmptyCell ? 0 : progress.clamp(0, 100),
       createdAt: goal?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -632,7 +642,8 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
 
   @override
   void dispose() {
-    // 타이머 취소
+    // 저장 대기 중이면 닫기 전에 저장 (완료 버튼, 뒤로가기 모두 해당)
+    if (debounceTimer?.isActive ?? false) _save();
     debounceTimer?.cancel();
 
     // 리스너 제거
@@ -648,6 +659,14 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
     super.dispose();
   }
 
+  Future<int?> _save() => widget.onSave(
+    widget.goal,
+    widget.position,
+    titleController.text.trim(),
+    descriptionController.text.trim(),
+    int.tryParse(progressController.text) ?? 0,
+  );
+
   void _onTextChanged() {
     // 이전 타이머 취소
     debounceTimer?.cancel();
@@ -657,13 +676,7 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
       if (!mounted) return;
 
       // 저장 실행
-      final savedId = await widget.onSave(
-        widget.goal,
-        widget.position,
-        titleController.text.trim(),
-        descriptionController.text.trim(),
-        int.tryParse(progressController.text) ?? 0,
-      );
+      final savedId = await _save();
 
       if (savedId != null && mounted) {
         setState(() {
@@ -711,6 +724,8 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
                   prefixIcon: const Icon(Icons.flag_outlined, size: 20),
                 ),
                 style: const TextStyle(fontSize: 15),
+                enableSuggestions: false,
+                autocorrect: false,
               ),
               const SizedBox(height: 20),
               Text(
@@ -726,6 +741,8 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
                 ),
                 maxLines: 3,
                 style: const TextStyle(fontSize: 14),
+                enableSuggestions: false,
+                autocorrect: false,
               ),
               const SizedBox(height: 20),
               Text(

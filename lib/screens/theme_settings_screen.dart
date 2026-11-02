@@ -15,9 +15,10 @@ class ThemeSettingsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text('theme.title'.tr()),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
           _buildThemeOption(
             context,
             ref,
@@ -47,7 +48,8 @@ class ThemeSettingsScreen extends ConsumerWidget {
             themeMode: ThemeMode.system,
             isSelected: settings.themeMode == ThemeMode.system,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
