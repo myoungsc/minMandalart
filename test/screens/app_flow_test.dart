@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mandalart/core/db/sqlite_helper.dart';
 import 'package:mandalart/core/providers/goal_provider.dart';
 import 'package:mandalart/core/theme/app_theme.dart';
+import 'package:mandalart/core/widgets/mm_widgets.dart';
 import 'package:mandalart/models/goal_model.dart';
 import 'package:mandalart/screens/home_screen.dart';
 import 'package:mandalart/screens/settings_screen.dart';
@@ -579,6 +580,15 @@ void main() {
       await tapAndSettle(tester, find.text('Second').first);
       expect(find.text('Second'), findsWidgets);
       expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
+    });
+
+    testWidgets('왼쪽 여백은 목록만 처리하고 상세 영역을 밀지 않는다', (tester) async {
+      tester.view.padding = const FakeViewPadding(left: 60);
+      addTearDown(tester.view.resetPadding);
+      await pumpApp(tester, boards: [_board()], width: 1000);
+
+      const paneLeft = 60 + 302.0;
+      expect(tester.getTopLeft(find.byType(PrimaryButton)).dx, paneLeft + 16);
     });
 
     testWidgets('왼쪽 목록도 스크린리더에서 읽을 수 있다', (tester) async {

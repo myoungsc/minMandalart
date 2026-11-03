@@ -34,7 +34,7 @@ class HomeScreen extends StatelessWidget {
         children: [
           if (twoPane)
             Container(
-              width: _listPaneWidth + 2,
+              width: _listPaneWidth + 2 + MediaQuery.paddingOf(context).left,
               decoration: BoxDecoration(
                 color: c.bg,
                 border: Border(right: BorderSide(color: c.line, width: 2)),
@@ -48,10 +48,15 @@ class HomeScreen extends StatelessWidget {
             // 경계가 없으면 화면이 먼저 그려진 왼쪽 목록의 접근성 정보까지 차단한다.
             child: Semantics(
               container: true,
-              child: Navigator(
-                key: detailNavigatorKey,
-                onGenerateRoute: (_) =>
-                    MaterialPageRoute(builder: (_) => const _DetailRoot()),
+              // 2단에서는 왼쪽 여백(카메라 영역 등)을 목록이 이미 처리한다.
+              child: MediaQuery.removePadding(
+                context: context,
+                removeLeft: twoPane,
+                child: Navigator(
+                  key: detailNavigatorKey,
+                  onGenerateRoute: (_) =>
+                      MaterialPageRoute(builder: (_) => const _DetailRoot()),
+                ),
               ),
             ),
           ),
