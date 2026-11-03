@@ -1,3 +1,32 @@
+class ChecklistItem {
+  final int? id;
+  final int goalId;
+  final String title;
+  final bool isDone;
+  final int position;
+  final DateTime createdAt;
+
+  ChecklistItem({
+    this.id,
+    required this.goalId,
+    required this.title,
+    this.isDone = false,
+    required this.position,
+    required this.createdAt,
+  });
+
+  factory ChecklistItem.fromMap(Map<String, dynamic> map) {
+    return ChecklistItem(
+      id: map['id'] as int?,
+      goalId: map['goal_id'] as int,
+      title: map['title'] as String,
+      isDone: (map['is_done'] as int) == 1,
+      position: map['position'] as int,
+      createdAt: DateTime.parse(map['created_at'] as String),
+    );
+  }
+}
+
 class Goal {
   final int? id;
   final String title;
@@ -8,6 +37,7 @@ class Goal {
   final int progress;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final List<ChecklistItem> checklistItems;
 
   Goal({
     this.id,
@@ -19,6 +49,7 @@ class Goal {
     this.progress = 0,
     required this.createdAt,
     this.updatedAt,
+    this.checklistItems = const [],
   });
 
   Map<String, dynamic> toMap() {
@@ -35,7 +66,10 @@ class Goal {
     };
   }
 
-  factory Goal.fromMap(Map<String, dynamic> map) {
+  factory Goal.fromMap(
+    Map<String, dynamic> map, {
+    List<ChecklistItem> checklistItems = const [],
+  }) {
     return Goal(
       id: map['id'] as int?,
       title: map['title'] as String,
@@ -48,6 +82,7 @@ class Goal {
       updatedAt: map['updated_at'] != null
           ? DateTime.parse(map['updated_at'] as String)
           : null,
+      checklistItems: checklistItems,
     );
   }
 
@@ -62,6 +97,7 @@ class Goal {
     int? progress,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<ChecklistItem>? checklistItems,
   }) {
     return Goal(
       id: id ?? this.id,
@@ -73,6 +109,7 @@ class Goal {
       progress: progress ?? this.progress,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      checklistItems: checklistItems ?? this.checklistItems,
     );
   }
 }

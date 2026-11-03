@@ -525,9 +525,9 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
     );
   }
 
-  Future<void> _persistGoal(Goal goal) async {
+  Future<void> _showErrorOnFailure(Future<void> write) async {
     try {
-      await ref.read(currentBoardProvider.notifier).updateGoal(goal);
+      await write;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -547,29 +547,26 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
     final savedTitle = title.isNotEmpty ? title : goal.title;
     if (savedTitle.isEmpty) return;
 
-    await _persistGoal(
-      Goal(
-        id: goal.id,
-        title: savedTitle,
-        description: description.isNotEmpty ? description : null,
-        parentId: goal.parentId,
-        position: goal.position,
-        progress: progress.clamp(0, 100),
-        createdAt: goal.createdAt,
-        updatedAt: DateTime.now(),
-      ),
+    await _showErrorOnFailure(
+      ref
+          .read(currentBoardProvider.notifier)
+          .updateGoal(
+            Goal(
+              id: goal.id,
+              title: savedTitle,
+              description: description.isNotEmpty ? description : null,
+              parentId: goal.parentId,
+              position: goal.position,
+              progress: progress.clamp(0, 100),
+              createdAt: goal.createdAt,
+              updatedAt: DateTime.now(),
+            ),
+          ),
     );
   }
 
-  Future<void> _clearGoal(Goal goal) => _persistGoal(
-    Goal(
-      id: goal.id,
-      title: '',
-      parentId: goal.parentId,
-      position: goal.position,
-      createdAt: goal.createdAt,
-      updatedAt: DateTime.now(),
-    ),
+  Future<void> _clearGoal(Goal goal) => _showErrorOnFailure(
+    ref.read(currentBoardProvider.notifier).clearGoal(goal.id!),
   );
 
   Future<void> _editGoal(Goal goal) async {

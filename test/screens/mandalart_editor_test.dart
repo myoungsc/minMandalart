@@ -27,6 +27,19 @@ class _FakeDb implements SQLiteHelper {
   }
 
   @override
+  Future<void> clearGoal(int goalId) async {
+    final index = goals.indexWhere((g) => g.id == goalId);
+    final goal = goals[index];
+    goals[index] = Goal(
+      id: goal.id,
+      title: '',
+      parentId: goal.parentId,
+      position: goal.position,
+      createdAt: goal.createdAt,
+    );
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

@@ -76,19 +76,31 @@ class CurrentBoardNotifier extends StateNotifier<MandalartBoard?> {
     state = null;
   }
 
-  Future<void> updateGoal(Goal goal) async {
-    if (state == null) return;
+  Future<void> updateGoal(Goal goal) => _writeAndRefresh(() => _db.updateGoal(goal));
 
-    try {
-      await _db.updateGoal(goal);
-      final updatedBoard = await _db.readMandalartBoard(state!.id!);
-      state = updatedBoard;
+  Future<void> clearGoal(int goalId) =>
+      _writeAndRefresh(() => _db.clearGoal(goalId));
 
-      // 메인 화면의 보드 목록도 업데이트
-      _ref.read(mandalartBoardsProvider.notifier).loadBoards();
-    } catch (e) {
-      rethrow;
-    }
+  Future<void> setGoalCompleted(int goalId, bool isCompleted) =>
+      _writeAndRefresh(() => _db.setGoalCompleted(goalId, isCompleted));
+
+  Future<void> addChecklistItem(int goalId, String title) =>
+      _writeAndRefresh(() => _db.addChecklistItem(goalId, title));
+
+  Future<void> setChecklistItemDone(ChecklistItem item, bool isDone) =>
+      _writeAndRefresh(() => _db.setChecklistItemDone(item, isDone));
+
+  Future<void> deleteChecklistItem(ChecklistItem item) =>
+      _writeAndRefresh(() => _db.deleteChecklistItem(item));
+
+  /// 저장 후 현재 보드와 홈 목록을 함께 갱신한다. 저장 실패는 호출한 쪽으로 전달한다.
+  Future<void> _writeAndRefresh(Future<void> Function() write) async {
+    final boardId = state?.id;
+    if (boardId == null) return;
+
+    await write();
+    state = await _db.readMandalartBoard(boardId);
+    await _ref.read(mandalartBoardsProvider.notifier).loadBoards();
   }
 }
 

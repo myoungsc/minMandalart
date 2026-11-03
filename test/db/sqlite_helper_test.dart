@@ -1,5 +1,9 @@
+import 'dart:io';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mandalart/core/db/sqlite_helper.dart';
+import 'package:mandalart/core/providers/goal_provider.dart';
 import 'package:mandalart/models/goal_model.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -386,6 +390,176 @@ void main() {
       expect(rows.map((r) => r['parent_id']).toSet(), {1});
       expect(rows.map((r) => r['position']), [0, 1, 2, 3, 4, 5, 6, 7]);
       expect(rows.map((r) => r['title']).where((t) => t != ''), ['최신']);
+    });
+  });
+
+  group('체크리스트', () {
+    final helper = SQLiteHelper.instance;
+    late int boardId;
+    late Goal goal;
+
+    Future<Goal> reload() async {
+      final board = await helper.readMandalartBoard(boardId);
+      return board!.subGoals.firstWhere((g) => g.id == goal.id);
+    }
+
+    setUp(() async {
+      boardId = await helper.createBoardWithEmptyGoals(
+        MandalartBoard(centerGoal: '체크리스트', createdAt: DateTime.now()),
+      );
+      goal = (await helper.readMandalartBoard(boardId))!.subGoals.first;
+    });
+
+    test('항목은 추가한 순서로 읽고, 다른 칸과 섞이지 않는다', () async {
+      await helper.addChecklistItem(goal.id!, '첫째');
+      await helper.addChecklistItem(goal.id!, '둘째');
+
+      final board = await helper.readMandalartBoard(boardId);
+      expect(board!.subGoals[0].checklistItems.map((i) => i.title), ['첫째', '둘째']);
+      expect(board.subGoals[0].checklistItems.map((i) => i.position), [0, 1]);
+      expect(board.subGoals[1].checklistItems, isEmpty);
+    });
+
+    test('진행률은 완료 항목 비율로 계산되고, 항목이 없어지면 0이 된다', () async {
+      await helper.addChecklistItem(goal.id!, 'A');
+      await helper.addChecklistItem(goal.id!, 'B');
+      await helper.addChecklistItem(goal.id!, 'C');
+      expect((await reload()).progress, 0);
+
+      var items = (await reload()).checklistItems;
+      await helper.setChecklistItemDone(items[0], true);
+      expect((await reload()).progress, 33);
+
+      await helper.setChecklistItemDone(items[1], true);
+      await helper.setChecklistItemDone(items[2], true);
+      expect((await reload()).progress, 100);
+
+      await helper.setChecklistItemDone(items[2], false);
+      expect((await reload()).progress, 66);
+
+      await helper.deleteChecklistItem(items[2]);
+      expect((await reload()).progress, 100);
+
+      for (final item in (await reload()).checklistItems) {
+        await helper.deleteChecklistItem(item);
+      }
+      expect((await reload()).progress, 0);
+    });
+
+    test('완료 토글은 체크리스트가 없는 칸에만 적용된다', () async {
+      await helper.setGoalCompleted(goal.id!, true);
+      expect((await reload()).progress, 100);
+      await helper.setGoalCompleted(goal.id!, false);
+      expect((await reload()).progress, 0);
+
+      await helper.addChecklistItem(goal.id!, 'A');
+      await helper.setGoalCompleted(goal.id!, true);
+      expect((await reload()).progress, 0);
+    });
+
+    test('항목을 처음 추가하면 기존 수동 진행률을 대체한다', () async {
+      await helper.updateGoal(goal.copyWith(title: '기존', progress: 40));
+      expect((await reload()).progress, 40);
+
+      await helper.addChecklistItem(goal.id!, 'A');
+      expect((await reload()).progress, 0);
+    });
+
+    test('칸 비우기는 내용과 체크리스트를 함께 지운다', () async {
+      await helper.updateGoal(
+        goal.copyWith(title: '제목', description: '설명', progress: 100),
+      );
+      await helper.addChecklistItem(goal.id!, 'A');
+
+      await helper.clearGoal(goal.id!);
+
+      final cleared = await reload();
+      expect(cleared.title, '');
+      expect(cleared.description, isNull);
+      expect(cleared.progress, 0);
+      expect(cleared.checklistItems, isEmpty);
+    });
+
+    test('보드를 삭제하면 항목도 함께 삭제된다', () async {
+      final itemId = await helper.addChecklistItem(goal.id!, 'A');
+
+      await helper.deleteMandalartBoard(boardId);
+
+      final db = await helper.database;
+      expect(
+        await db.query('checklist_items', where: 'id = ?', whereArgs: [itemId]),
+        isEmpty,
+      );
+    });
+
+    test('Notifier는 저장 후 현재 보드와 홈 목록을 함께 갱신한다', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(currentBoardProvider.notifier);
+      await notifier.loadBoard(boardId);
+      final boards = container.read(mandalartBoardsProvider.notifier);
+      await boards.loadBoards();
+
+      await notifier.setGoalCompleted(goal.id!, true);
+      await notifier.addChecklistItem(goal.id!, 'A');
+      var current = container.read(currentBoardProvider)!.subGoals.first;
+      expect(current.checklistItems.single.title, 'A');
+      expect(current.progress, 0);
+
+      await notifier.setChecklistItemDone(current.checklistItems.single, true);
+      final listed = container
+          .read(mandalartBoardsProvider)
+          .requireValue
+          .firstWhere((b) => b.id == boardId);
+      expect(listed.subGoals.first.progress, 100);
+    });
+
+    test('v1 DB를 v3로 올리면 기존 목표가 유지되고 체크리스트를 쓸 수 있다', () async {
+      final dir = await Directory.systemTemp.createTemp('mandalart');
+      addTearDown(() => dir.delete(recursive: true));
+      final path = '${dir.path}/upgrade.db';
+
+      final v1 = await databaseFactoryFfi.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: (db, _) async {
+            await db.execute(
+              'CREATE TABLE mandalart_boards (id INTEGER PRIMARY KEY AUTOINCREMENT, center_goal TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT)',
+            );
+            await db.execute(
+              'CREATE TABLE goals (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, parent_id INTEGER NOT NULL, position INTEGER NOT NULL, is_completed INTEGER NOT NULL, progress INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT, FOREIGN KEY (parent_id) REFERENCES mandalart_boards (id) ON DELETE CASCADE)',
+            );
+            await db.insert('mandalart_boards', {
+              'id': 1,
+              'center_goal': '보드',
+              'created_at': '2026-01-01T00:00:00.000',
+            });
+            await db.insert('goals', {
+              'title': '기존 목표',
+              'parent_id': 1,
+              'position': 0,
+              'is_completed': 0,
+              'progress': 40,
+              'created_at': '2026-01-01T00:00:00.000',
+            });
+          },
+        ),
+      );
+      await v1.close();
+
+      final v3 = await databaseFactoryFfi.openDatabase(
+        path,
+        options: OpenDatabaseOptions(version: 3, onUpgrade: SQLiteHelper.upgrade),
+      );
+      addTearDown(v3.close);
+
+      expect(await v3.getVersion(), 3);
+      final goals = await v3.query('goals', orderBy: 'position');
+      expect(goals.length, 8);
+      expect(goals.first['title'], '기존 목표');
+      expect(goals.first['progress'], 40);
+      expect(await v3.query('checklist_items'), isEmpty);
     });
   });
 }

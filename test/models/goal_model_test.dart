@@ -258,4 +258,20 @@ void main() {
       expect(goal.copyWith(title: '수정').description, '목표 설명');
     });
   });
+
+  test('ChecklistItem fromMap 변환 테스트', () {
+    final item = ChecklistItem.fromMap({
+      'id': 1,
+      'goal_id': 2,
+      'title': '항목',
+      'is_done': 1,
+      'position': 3,
+      'created_at': '2026-01-01T00:00:00.000',
+    });
+
+    expect(item.goalId, 2);
+    expect(item.title, '항목');
+    expect(item.isDone, isTrue);
+    expect(item.position, 3);
+  });
 }
