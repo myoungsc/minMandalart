@@ -58,11 +58,11 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
         final currentBoard = ref.read(currentBoardProvider);
         if (currentBoard?.id == null) return;
 
+        final description = _descriptionController.text.trim();
         final updatedBoard = currentBoard!.copyWith(
           centerGoal: _centerGoalController.text.trim(),
-          description: _descriptionController.text.trim().isNotEmpty
-              ? _descriptionController.text.trim()
-              : null,
+          description: description,
+          clearDescription: description.isEmpty,
         );
 
         await db.updateMandalartBoard(updatedBoard);
@@ -86,18 +86,7 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
           createdAt: DateTime.now(),
         );
 
-        final boardId = await db.createMandalartBoard(board);
-
-        // Create empty goals for 8 positions (3x3 grid with center)
-        for (int i = 0; i < 8; i++) {
-          final goal = Goal(
-            title: '',
-            parentId: boardId,
-            position: i,
-            createdAt: DateTime.now(),
-          );
-          await db.createGoal(goal);
-        }
+        await db.createBoardWithEmptyGoals(board);
 
         if (mounted) {
           Navigator.pop(context, true);
@@ -307,11 +296,14 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
                   }
 
                   final goalIndex = index > 4 ? index - 1 : index;
-                  final goal = goalIndex < board.subGoals.length
-                      ? board.subGoals[goalIndex]
-                      : null;
+                  final goal = board.subGoals
+                      .where((g) => g.position == goalIndex)
+                      .firstOrNull;
 
-                  return _buildGoalTile(goal, goalIndex);
+                  // 보드 생성과 DB 마이그레이션이 8칸을 보장하므로 없으면 표시만 생략
+                  if (goal == null) return const SizedBox.shrink();
+
+                  return _buildGoalTile(goal);
                 },
               ),
             ),
@@ -415,13 +407,13 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
     );
   }
 
-  Widget _buildGoalTile(Goal? goal, int position) {
-    final hasContent = goal != null && goal.title.isNotEmpty;
-    final progress = goal?.progress ?? 0;
+  Widget _buildGoalTile(Goal goal) {
+    final hasContent = goal.title.isNotEmpty;
+    final progress = goal.progress;
     final isCompleted = progress == 100;
 
     return InkWell(
-      onTap: () => _editGoal(goal, position),
+      onTap: () => _editGoal(goal),
       borderRadius: BorderRadius.circular(14),
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
@@ -533,63 +525,61 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
     );
   }
 
-  Future<int?> _saveGoalToDb(
-    Goal? goal,
-    int position,
-    String title,
-    String description,
-    int progress,
-  ) async {
-    final currentBoard = ref.read(currentBoardProvider);
-    if (currentBoard?.id == null) return null;
-
-    // 제목이 없으면 빈 칸: 저장된 칸은 내용과 진행률까지 비우고, 새 칸은 만들지 않음
-    final isEmptyCell = title.isEmpty;
-    if (isEmptyCell && goal?.id == null) return null;
-
-    final updatedGoal = Goal(
-      id: goal?.id,
-      title: title,
-      description: !isEmptyCell && description.isNotEmpty ? description : null,
-      parentId: currentBoard!.id!,
-      position: position,
-      progress: isEmptyCell ? 0 : progress.clamp(0, 100),
-      createdAt: goal?.createdAt ?? DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
+  Future<void> _persistGoal(Goal goal) async {
     try {
-      if (goal?.id != null) {
-        await ref.read(currentBoardProvider.notifier).updateGoal(updatedGoal);
-        return goal!.id;
-      } else {
-        await ref.read(currentBoardProvider.notifier).createGoal(updatedGoal);
-        // 생성 후 새로 생성된 goal의 ID를 반환
-        final updatedBoard = ref.read(currentBoardProvider);
-        final createdGoal = updatedBoard?.subGoals.firstWhere(
-          (g) => g.position == position,
-        );
-        return createdGoal?.id;
-      }
+      await ref.read(currentBoardProvider.notifier).updateGoal(goal);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('${'editor.error_occurred'.tr()}: $e')));
       }
-      return null;
     }
   }
 
-  Future<void> _editGoal(Goal? goal, int position) async {
+  Future<void> _saveGoal(
+    Goal goal,
+    String title,
+    String description,
+    int progress,
+  ) async {
+    // 제목을 지운 채여도 기존 제목을 유지한다. 칸을 비우는 건 _clearGoal만 한다.
+    final savedTitle = title.isNotEmpty ? title : goal.title;
+    if (savedTitle.isEmpty) return;
+
+    await _persistGoal(
+      Goal(
+        id: goal.id,
+        title: savedTitle,
+        description: description.isNotEmpty ? description : null,
+        parentId: goal.parentId,
+        position: goal.position,
+        progress: progress.clamp(0, 100),
+        createdAt: goal.createdAt,
+        updatedAt: DateTime.now(),
+      ),
+    );
+  }
+
+  Future<void> _clearGoal(Goal goal) => _persistGoal(
+    Goal(
+      id: goal.id,
+      title: '',
+      parentId: goal.parentId,
+      position: goal.position,
+      createdAt: goal.createdAt,
+      updatedAt: DateTime.now(),
+    ),
+  );
+
+  Future<void> _editGoal(Goal goal) async {
     await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (context) => _GoalEditDialog(
         goal: goal,
-        position: position,
-        onSave: _saveGoalToDb,
-        currentBoardProvider: currentBoardProvider,
+        onSave: _saveGoal,
+        onClear: () => _clearGoal(goal),
       ),
     );
   }
@@ -597,17 +587,14 @@ class _MandalartEditorState extends ConsumerState<MandalartEditor> {
 
 // 별도의 StatefulWidget으로 다이얼로그 분리
 class _GoalEditDialog extends StatefulWidget {
-  final Goal? goal;
-  final int position;
-  final Future<int?> Function(Goal?, int, String, String, int) onSave;
-  final StateNotifierProvider<CurrentBoardNotifier, MandalartBoard?>
-  currentBoardProvider;
+  final Goal goal;
+  final Future<void> Function(Goal, String, String, int) onSave;
+  final Future<void> Function() onClear;
 
   const _GoalEditDialog({
     required this.goal,
-    required this.position,
     required this.onSave,
-    required this.currentBoardProvider,
+    required this.onClear,
   });
 
   @override
@@ -619,20 +606,18 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
   late TextEditingController descriptionController;
   late TextEditingController progressController;
 
-  int? currentGoalId;
   Timer? debounceTimer;
 
   @override
   void initState() {
     super.initState();
-    titleController = TextEditingController(text: widget.goal?.title ?? '');
+    titleController = TextEditingController(text: widget.goal.title);
     descriptionController = TextEditingController(
-      text: widget.goal?.description ?? '',
+      text: widget.goal.description ?? '',
     );
     progressController = TextEditingController(
-      text: (widget.goal?.progress ?? 0).toString(),
+      text: widget.goal.progress.toString(),
     );
-    currentGoalId = widget.goal?.id;
 
     // 리스너 추가
     titleController.addListener(_onTextChanged);
@@ -659,9 +644,8 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
     super.dispose();
   }
 
-  Future<int?> _save() => widget.onSave(
+  Future<void> _save() => widget.onSave(
     widget.goal,
-    widget.position,
     titleController.text.trim(),
     descriptionController.text.trim(),
     int.tryParse(progressController.text) ?? 0,
@@ -672,18 +656,35 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
     debounceTimer?.cancel();
 
     // 새로운 타이머 시작 (500ms 후 저장)
-    debounceTimer = Timer(const Duration(milliseconds: 500), () async {
-      if (!mounted) return;
+    debounceTimer = Timer(const Duration(milliseconds: 500), _save);
+  }
 
-      // 저장 실행
-      final savedId = await _save();
+  Future<void> _confirmClear() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text('editor.clear_cell_confirm'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('home.cancel_button'.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text('editor.clear_cell_button'.tr()),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
 
-      if (savedId != null && mounted) {
-        setState(() {
-          currentGoalId = savedId;
-        });
-      }
-    });
+    // 닫을 때 대기 중인 저장이 비운 칸을 되살리지 않도록 먼저 취소
+    debounceTimer?.cancel();
+    await widget.onClear();
+    if (mounted) Navigator.pop(context);
   }
 
   @override
@@ -696,13 +697,13 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
       title: Row(
         children: [
           Icon(
-            widget.goal?.title.isNotEmpty == true
+            widget.goal.title.isNotEmpty
                 ? Icons.edit_outlined
                 : Icons.add_circle_outline,
             size: 24,
           ),
           const SizedBox(width: 10),
-          Text(widget.goal?.title.isNotEmpty == true ? 'editor.goal_dialog_title_edit'.tr() : 'editor.goal_dialog_title_new'.tr()),
+          Text(widget.goal.title.isNotEmpty ? 'editor.goal_dialog_title_edit'.tr() : 'editor.goal_dialog_title_new'.tr()),
         ],
       ),
       content: SizedBox(
@@ -796,6 +797,14 @@ class _GoalEditDialogState extends State<_GoalEditDialog> {
         ),
       ),
       actions: [
+        if (widget.goal.title.isNotEmpty)
+          TextButton(
+            onPressed: _confirmClear,
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text('editor.clear_cell_button'.tr()),
+          ),
         TextButton.icon(
           onPressed: () => Navigator.pop(context, false),
           icon: const Icon(Icons.check_rounded, size: 18),

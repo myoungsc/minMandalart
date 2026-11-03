@@ -213,7 +213,8 @@ class _MandalartBoardCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('yyyy.MM.dd');
     final progress = board.overallProgress;
-    final completedGoals = board.subGoals.where((g) => g.progress == 100).length;
+    final filledGoals = board.subGoals.where((g) => g.title.isNotEmpty);
+    final completedGoals = filledGoals.where((g) => g.progress == 100).length;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -372,14 +373,14 @@ class _MandalartBoardCard extends StatelessWidget {
                           _buildStatChip(
                             icon: Icons.check_circle_outline_rounded,
                             label: 'home.completed_label'.tr(),
-                            value: '$completedGoals/8',
+                            value: '$completedGoals/${filledGoals.length}',
                             color: AppTheme.successColor,
                           ),
                           const SizedBox(width: 8),
                           _buildStatChip(
                             icon: Icons.flag_outlined,
                             label: 'home.sub_goals_label'.tr(),
-                            value: '${board.subGoals.where((g) => g.title.isNotEmpty).length}',
+                            value: '${filledGoals.length}',
                             color: AppTheme.infoColor,
                           ),
                         ],

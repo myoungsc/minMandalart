@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "My Goals"
+    "title": "My Goals",
+    "name": "miniManda"
   },
   "home": {
     "empty_title": "No goals yet",
@@ -37,7 +38,9 @@
     "goal_title_hint": "e.g., Study 1 hour every day",
     "goal_description_hint": "Enter details",
     "goal_progress_label": "Progress",
-    "completed_badge": "Done"
+    "completed_badge": "Done",
+    "clear_cell_button": "Clear cell",
+    "clear_cell_confirm": "Clear this cell's title, description, and progress?"
   },
   "settings": {
     "title": "Settings",

@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "Мои Цели"
+    "title": "Мои Цели",
+    "name": "miniManda"
   },
   "home": {
     "empty_title": "Пока нет целей",
@@ -37,7 +38,9 @@
     "goal_title_hint": "напр: Заниматься 1 час каждый день",
     "goal_description_hint": "Введите детали",
     "goal_progress_label": "Прогресс",
-    "completed_badge": "Готово"
+    "completed_badge": "Готово",
+    "clear_cell_button": "Очистить ячейку",
+    "clear_cell_confirm": "Удалить название, описание и прогресс этой ячейки?"
   },
   "settings": {
     "title": "Настройки",

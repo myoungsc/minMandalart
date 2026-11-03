@@ -340,4 +340,52 @@ void main() {
       expect(readBoard?.overallProgress, 35);
     });
   });
+
+  group('보드 생성과 마이그레이션', () {
+    test('createBoardWithEmptyGoals는 빈 칸 8개를 함께 만든다', () async {
+      final helper = SQLiteHelper.instance;
+      final id = await helper.createBoardWithEmptyGoals(
+        MandalartBoard(centerGoal: '트랜잭션', createdAt: DateTime.now()),
+      );
+
+      final goals = await helper.readGoalsByBoardId(id);
+      expect(goals.map((g) => g.position), [0, 1, 2, 3, 4, 5, 6, 7]);
+      expect(goals.every((g) => g.title.isEmpty), isTrue);
+    });
+
+    test('migrateToV2는 고아, 중복을 지우고 빠진 칸을 채운다', () async {
+      final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+      addTearDown(db.close);
+      await db.execute(
+        'CREATE TABLE mandalart_boards (id INTEGER PRIMARY KEY AUTOINCREMENT, center_goal TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT)',
+      );
+      await db.execute(
+        'CREATE TABLE goals (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, parent_id INTEGER NOT NULL, position INTEGER NOT NULL, is_completed INTEGER NOT NULL, progress INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT)',
+      );
+      await db.insert('mandalart_boards', {
+        'id': 1,
+        'center_goal': '보드',
+        'created_at': '2026-01-01T00:00:00.000',
+      });
+      Future<void> addGoal(String title, int parentId, int position) =>
+          db.insert('goals', {
+            'title': title,
+            'parent_id': parentId,
+            'position': position,
+            'is_completed': 0,
+            'progress': 0,
+            'created_at': '2026-01-01T00:00:00.000',
+          });
+      await addGoal('고아', 99, 0);
+      await addGoal('예전 중복', 1, 3);
+      await addGoal('최신', 1, 3);
+
+      await SQLiteHelper.migrateToV2(db);
+
+      final rows = await db.query('goals', orderBy: 'position');
+      expect(rows.map((r) => r['parent_id']).toSet(), {1});
+      expect(rows.map((r) => r['position']), [0, 1, 2, 3, 4, 5, 6, 7]);
+      expect(rows.map((r) => r['title']).where((t) => t != ''), ['최신']);
+    });
+  });
 }

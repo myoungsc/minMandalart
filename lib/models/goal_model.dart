@@ -1,6 +1,3 @@
-// copyWith에서 "생략"과 "null로 지우기"를 구분하는 값
-const Object _unset = Object();
-
 class Goal {
   final int? id;
   final String title;
@@ -57,7 +54,8 @@ class Goal {
   Goal copyWith({
     int? id,
     String? title,
-    Object? description = _unset,
+    String? description,
+    bool clearDescription = false,
     int? parentId,
     int? position,
     bool? isCompleted,
@@ -68,9 +66,7 @@ class Goal {
     return Goal(
       id: id ?? this.id,
       title: title ?? this.title,
-      description: identical(description, _unset)
-          ? this.description
-          : description as String?,
+      description: clearDescription ? null : description ?? this.description,
       parentId: parentId ?? this.parentId,
       position: position ?? this.position,
       isCompleted: isCompleted ?? this.isCompleted,
@@ -124,7 +120,8 @@ class MandalartBoard {
   MandalartBoard copyWith({
     int? id,
     String? centerGoal,
-    Object? description = _unset,
+    String? description,
+    bool clearDescription = false,
     DateTime? createdAt,
     DateTime? updatedAt,
     List<Goal>? subGoals,
@@ -132,9 +129,7 @@ class MandalartBoard {
     return MandalartBoard(
       id: id ?? this.id,
       centerGoal: centerGoal ?? this.centerGoal,
-      description: identical(description, _unset)
-          ? this.description
-          : description as String?,
+      description: clearDescription ? null : description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       subGoals: subGoals ?? this.subGoals,
@@ -142,8 +137,9 @@ class MandalartBoard {
   }
 
   int get overallProgress {
-    if (subGoals.isEmpty) return 0;
-    final totalProgress = subGoals.fold<int>(0, (sum, goal) => sum + goal.progress);
-    return totalProgress ~/ subGoals.length;
+    final filledGoals = subGoals.where((goal) => goal.title.isNotEmpty);
+    if (filledGoals.isEmpty) return 0;
+    final totalProgress = filledGoals.fold<int>(0, (sum, goal) => sum + goal.progress);
+    return totalProgress ~/ filledGoals.length;
   }
 }

@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "私の目標"
+    "title": "私の目標",
+    "name": "miniManda"
   },
   "home": {
     "empty_title": "まだ目標がありません",
@@ -37,7 +38,9 @@
     "goal_title_hint": "例：毎日1時間勉強",
     "goal_description_hint": "詳細を入力してください",
     "goal_progress_label": "進捗率",
-    "completed_badge": "完了"
+    "completed_badge": "完了",
+    "clear_cell_button": "マスをクリア",
+    "clear_cell_confirm": "このマスのタイトル、説明、進捗をすべて消去しますか?"
   },
   "settings": {
     "title": "設定",

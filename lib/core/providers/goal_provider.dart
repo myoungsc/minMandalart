@@ -13,8 +13,8 @@ class MandalartBoardsNotifier extends StateNotifier<AsyncValue<List<MandalartBoa
     loadBoards();
   }
 
+  // 초기 상태만 loading. 갱신 중에는 기존 목록을 유지해 스크롤 위치가 초기화되지 않음
   Future<void> loadBoards() async {
-    state = const AsyncValue.loading();
     try {
       final boards = await _db.readAllMandalartBoards();
       state = AsyncValue.data(boards);
@@ -86,30 +86,6 @@ class CurrentBoardNotifier extends StateNotifier<MandalartBoard?> {
 
       // 메인 화면의 보드 목록도 업데이트
       _ref.read(mandalartBoardsProvider.notifier).loadBoards();
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<void> createGoal(Goal goal) async {
-    if (state == null) return;
-
-    try {
-      await _db.createGoal(goal);
-      final updatedBoard = await _db.readMandalartBoard(state!.id!);
-      state = updatedBoard;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<void> deleteGoal(int goalId) async {
-    if (state == null) return;
-
-    try {
-      await _db.deleteGoal(goalId);
-      final updatedBoard = await _db.readMandalartBoard(state!.id!);
-      state = updatedBoard;
     } catch (e) {
       rethrow;
     }

@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "Mis Objetivos"
+    "title": "Mis Objetivos",
+    "name": "miniManda"
   },
   "home": {
     "empty_title": "Aún no hay objetivos",
@@ -37,7 +38,9 @@
     "goal_title_hint": "ej: Estudiar 1 hora todos los días",
     "goal_description_hint": "Ingresa los detalles",
     "goal_progress_label": "Progreso",
-    "completed_badge": "Hecho"
+    "completed_badge": "Hecho",
+    "clear_cell_button": "Vaciar casilla",
+    "clear_cell_confirm": "¿Borrar el título, la descripción y el progreso de esta casilla?"
   },
   "settings": {
     "title": "Configuración",

@@ -222,7 +222,22 @@ void main() {
       expect(updatedBoard.createdAt, now);
     });
 
-    test('copyWith는 description을 명시적 null로 지우고, 생략하면 유지한다', () {
+    test('overallProgress는 제목이 있는 칸만 평균한다', () {
+      final now = DateTime.now();
+      final board = MandalartBoard(
+        centerGoal: '중앙 목표',
+        createdAt: now,
+        subGoals: [
+          Goal(title: '목표', parentId: 1, position: 0, progress: 100, createdAt: now),
+          Goal(title: '', parentId: 1, position: 1, createdAt: now),
+          Goal(title: '', parentId: 1, position: 2, progress: 50, createdAt: now),
+        ],
+      );
+
+      expect(board.overallProgress, 100);
+    });
+
+    test('copyWith는 clearDescription으로 설명을 지우고, 생략하면 유지한다', () {
       final now = DateTime.now();
       final board = MandalartBoard(
         centerGoal: '중앙 목표',
@@ -237,9 +252,9 @@ void main() {
         createdAt: now,
       );
 
-      expect(board.copyWith(description: null).description, isNull);
+      expect(board.copyWith(clearDescription: true).description, isNull);
       expect(board.copyWith(centerGoal: '수정').description, '보드 설명');
-      expect(goal.copyWith(description: null).description, isNull);
+      expect(goal.copyWith(clearDescription: true).description, isNull);
       expect(goal.copyWith(title: '수정').description, '목표 설명');
     });
   });

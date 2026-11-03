@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "Mes Objectifs"
+    "title": "Mes Objectifs",
+    "name": "miniManda"
   },
   "home": {
     "empty_title": "Pas encore d'objectifs",
@@ -37,7 +38,9 @@
     "goal_title_hint": "ex: Étudier 1 heure tous les jours",
     "goal_description_hint": "Entrez les détails",
     "goal_progress_label": "Progression",
-    "completed_badge": "Terminé"
+    "completed_badge": "Terminé",
+    "clear_cell_button": "Vider la case",
+    "clear_cell_confirm": "Effacer le titre, la description et la progression de cette case ?"
   },
   "settings": {
     "title": "Paramètres",
