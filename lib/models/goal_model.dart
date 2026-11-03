@@ -1,3 +1,34 @@
+enum GoalStatus { empty, todo, inProgress, done }
+
+class ChecklistItem {
+  final int? id;
+  final int goalId;
+  final String title;
+  final bool isDone;
+  final int position;
+  final DateTime createdAt;
+
+  ChecklistItem({
+    this.id,
+    required this.goalId,
+    required this.title,
+    this.isDone = false,
+    required this.position,
+    required this.createdAt,
+  });
+
+  factory ChecklistItem.fromMap(Map<String, dynamic> map) {
+    return ChecklistItem(
+      id: map['id'] as int?,
+      goalId: map['goal_id'] as int,
+      title: map['title'] as String,
+      isDone: (map['is_done'] as int) == 1,
+      position: map['position'] as int,
+      createdAt: DateTime.parse(map['created_at'] as String),
+    );
+  }
+}
+
 class Goal {
   final int? id;
   final String title;
@@ -8,6 +39,7 @@ class Goal {
   final int progress;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final List<ChecklistItem> checklistItems;
 
   Goal({
     this.id,
@@ -19,7 +51,14 @@ class Goal {
     this.progress = 0,
     required this.createdAt,
     this.updatedAt,
+    this.checklistItems = const [],
   });
+
+  GoalStatus get status {
+    if (title.isEmpty) return GoalStatus.empty;
+    if (progress >= 100) return GoalStatus.done;
+    return progress > 0 ? GoalStatus.inProgress : GoalStatus.todo;
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -35,7 +74,10 @@ class Goal {
     };
   }
 
-  factory Goal.fromMap(Map<String, dynamic> map) {
+  factory Goal.fromMap(
+    Map<String, dynamic> map, {
+    List<ChecklistItem> checklistItems = const [],
+  }) {
     return Goal(
       id: map['id'] as int?,
       title: map['title'] as String,
@@ -48,6 +90,7 @@ class Goal {
       updatedAt: map['updated_at'] != null
           ? DateTime.parse(map['updated_at'] as String)
           : null,
+      checklistItems: checklistItems,
     );
   }
 
@@ -55,23 +98,26 @@ class Goal {
     int? id,
     String? title,
     String? description,
+    bool clearDescription = false,
     int? parentId,
     int? position,
     bool? isCompleted,
     int? progress,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<ChecklistItem>? checklistItems,
   }) {
     return Goal(
       id: id ?? this.id,
       title: title ?? this.title,
-      description: description ?? this.description,
+      description: clearDescription ? null : description ?? this.description,
       parentId: parentId ?? this.parentId,
       position: position ?? this.position,
       isCompleted: isCompleted ?? this.isCompleted,
       progress: progress ?? this.progress,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      checklistItems: checklistItems ?? this.checklistItems,
     );
   }
 }
@@ -120,6 +166,7 @@ class MandalartBoard {
     int? id,
     String? centerGoal,
     String? description,
+    bool clearDescription = false,
     DateTime? createdAt,
     DateTime? updatedAt,
     List<Goal>? subGoals,
@@ -127,16 +174,22 @@ class MandalartBoard {
     return MandalartBoard(
       id: id ?? this.id,
       centerGoal: centerGoal ?? this.centerGoal,
-      description: description ?? this.description,
+      description: clearDescription ? null : description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       subGoals: subGoals ?? this.subGoals,
     );
   }
 
+  int get filledCount => subGoals.where((g) => g.title.isNotEmpty).length;
+
+  int get completedCount =>
+      subGoals.where((g) => g.status == GoalStatus.done).length;
+
   int get overallProgress {
-    if (subGoals.isEmpty) return 0;
-    final totalProgress = subGoals.fold<int>(0, (sum, goal) => sum + goal.progress);
-    return totalProgress ~/ subGoals.length;
+    final filledGoals = subGoals.where((goal) => goal.title.isNotEmpty);
+    if (filledGoals.isEmpty) return 0;
+    final totalProgress = filledGoals.fold<int>(0, (sum, goal) => sum + goal.progress);
+    return totalProgress ~/ filledGoals.length;
   }
 }

@@ -221,5 +221,57 @@ void main() {
       expect(updatedBoard.id, 1);
       expect(updatedBoard.createdAt, now);
     });
+
+    test('overallProgress는 제목이 있는 칸만 평균한다', () {
+      final now = DateTime.now();
+      final board = MandalartBoard(
+        centerGoal: '중앙 목표',
+        createdAt: now,
+        subGoals: [
+          Goal(title: '목표', parentId: 1, position: 0, progress: 100, createdAt: now),
+          Goal(title: '', parentId: 1, position: 1, createdAt: now),
+          Goal(title: '', parentId: 1, position: 2, progress: 50, createdAt: now),
+        ],
+      );
+
+      expect(board.overallProgress, 100);
+    });
+
+    test('copyWith는 clearDescription으로 설명을 지우고, 생략하면 유지한다', () {
+      final now = DateTime.now();
+      final board = MandalartBoard(
+        centerGoal: '중앙 목표',
+        description: '보드 설명',
+        createdAt: now,
+      );
+      final goal = Goal(
+        title: '목표',
+        description: '목표 설명',
+        parentId: 1,
+        position: 0,
+        createdAt: now,
+      );
+
+      expect(board.copyWith(clearDescription: true).description, isNull);
+      expect(board.copyWith(centerGoal: '수정').description, '보드 설명');
+      expect(goal.copyWith(clearDescription: true).description, isNull);
+      expect(goal.copyWith(title: '수정').description, '목표 설명');
+    });
+  });
+
+  test('ChecklistItem fromMap 변환 테스트', () {
+    final item = ChecklistItem.fromMap({
+      'id': 1,
+      'goal_id': 2,
+      'title': '항목',
+      'is_done': 1,
+      'position': 3,
+      'created_at': '2026-01-01T00:00:00.000',
+    });
+
+    expect(item.goalId, 2);
+    expect(item.title, '항목');
+    expect(item.isDone, isTrue);
+    expect(item.position, 3);
   });
 }
