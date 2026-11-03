@@ -27,6 +27,7 @@ dependencies:
 
   # Localization
   easy_localization: ^3.0.7
+  share_plus: ^13.3.1
 
 dev_dependencies:
   flutter_test:

@@ -148,3 +148,9 @@
 
 ## 2026-11-03 09:44:18
 - 3단계 커밋해줘, 2. 디자인 나왔어 https://claude.ai/design/p/309267cd-b43f-403a-88c2-9be7f8b44077?file=miniManda+Step2.dc.html&via=share, 3. 테마 저장은뭐야?
+
+## 2026-11-03 09:45:17
+- 디자인 다시 전달 해줄게! claude_design MCP로 프로젝트 가져와서 miniManda Step2.dc.html 구현 (https://claude.ai/design/p/309267cd-b43f-403a-88c2-9be7f8b44077?file=MinimandaIcon.dc.html)
+
+## 2026-11-03 10:32:32
+- 1.커밋 해주고, 2.추가해줘(테마 저장), 3.유지해줘(채운 칸 평균), 4.앱 아이콘은 miniManda App Icon.dc.html 로 진행해줘 (https://claude.ai/design/p/309267cd-b43f-403a-88c2-9be7f8b44077?file=miniManda+App+Icon.dc.html)

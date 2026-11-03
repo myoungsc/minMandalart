@@ -249,6 +249,21 @@ class SQLiteHelper {
     );
   }
 
+  /// 제목과 메모만 저장한다. 진행률은 체크리스트와 완료 토글이 관리한다.
+  Future<void> updateGoalText(int goalId, String title, String? description) async {
+    final db = await database;
+    await db.update(
+      'goals',
+      {
+        'title': title,
+        'description': description,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [goalId],
+    );
+  }
+
   /// 칸의 내용과 체크리스트를 모두 지워 빈 칸으로 되돌린다.
   Future<void> clearGoal(int goalId) async {
     final db = await database;

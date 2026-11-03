@@ -1,258 +1,240 @@
-import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+
 import '../core/theme/app_theme.dart';
+import '../core/widgets/mm_widgets.dart';
 
 class AboutMandalartScreen extends StatelessWidget {
   const AboutMandalartScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final c = context.mm;
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const BackIcon(),
         title: Text('about.title'.tr()),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.info_outlined,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'about.mandalart_name'.tr(),
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'about.description1'.tr(),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      height: 1.7,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'about.description2'.tr(),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      height: 1.7,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ],
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          8,
+          20,
+          32 + MediaQuery.paddingOf(context).bottom,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const ExcludeSemantics(child: _Illustration()),
+            const SizedBox(height: 22),
+            Text(
+              'about.heading'.tr(),
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+                height: 1.25,
               ),
             ),
-            const SizedBox(height: 28),
-            Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'about.how_to_use'.tr(),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 10),
+            Text(
+              'about.intro'.tr(),
+              style: const TextStyle(fontSize: 16, height: 1.65),
             ),
-            const SizedBox(height: 16),
-            _buildStep(
-              context,
-              '1',
-              'about.step1'.tr(),
-              Icons.flag_outlined,
+            const SizedBox(height: 10),
+            Text(
+              'about.mini_note'.tr(),
+              style: TextStyle(fontSize: 15, height: 1.6, color: c.muted),
+            ),
+            const SizedBox(height: 22),
+            Text(
+              'about.how_to_use'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 14),
-            _buildStep(
-              context,
-              '2',
-              'about.step2'.tr(),
-              Icons.grid_4x4_outlined,
+            _Step(
+              number: 1,
+              text: 'about.step1'.tr(),
+              fill: c.center,
+              foreground: c.onCenter,
+              border: c.center,
             ),
-            const SizedBox(height: 14),
-            _buildStep(
-              context,
-              '3',
-              'about.step3'.tr(),
-              Icons.edit_note_outlined,
+            _Step(number: 2, text: 'about.step2'.tr(), fill: c.surface, border: c.line),
+            _Step(
+              number: 3,
+              text: 'about.step3'.tr(),
+              fill: c.surface,
+              progress: 0.55,
+              border: c.line,
             ),
-            const SizedBox(height: 14),
-            _buildStep(
-              context,
-              '4',
-              'about.step4'.tr(),
-              Icons.check_circle_outline_rounded,
+            _Step(
+              number: 4,
+              text: 'about.step4'.tr(),
+              fill: c.accent,
+              foreground: MmColors.onAccent,
+              border: c.line,
             ),
-            const SizedBox(height: 28),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .secondaryContainer
-                    .withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .secondary
-                      .withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.star_rounded,
-                        color: Theme.of(context).colorScheme.secondary,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'about.mini_title'.tr(),
-                        style: TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'about.mini_description'.tr(),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      height: 1.7,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            ],
-          ),
+          ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildStep(
-    BuildContext context,
-    String number,
-    String text,
-    IconData icon,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppTheme.textDisabled.withValues(alpha: 0.15),
-          width: 1,
-        ),
-      ),
+class _Step extends StatelessWidget {
+  final int number;
+  final String text;
+  final Color fill;
+  final Color border;
+  final Color? foreground;
+  final double? progress;
+
+  const _Step({
+    required this.number,
+    required this.text,
+    required this.fill,
+    required this.border,
+    this.foreground,
+    this.progress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mm;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
+          SizedBox.square(
+            dimension: 40,
+            child: _FilledTile(
+              fill: fill,
+              border: border,
+              progress: progress,
+              soft: c.accentSoft,
+              radius: 6,
               child: Text(
-                number,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
+                '$number',
+                style: TextStyle(
+                  color: foreground ?? c.ink,
                   fontSize: 18,
-                  letterSpacing: -0.5,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
           ),
           const SizedBox(width: 14),
           Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 15,
-                height: 1.5,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.2,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
               ),
             ),
           ),
-          Icon(
-            icon,
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-            size: 22,
-          ),
         ],
+      ),
+    );
+  }
+}
+
+class _FilledTile extends StatelessWidget {
+  final Color fill;
+  final Color border;
+  final Color soft;
+  final double? progress;
+  final double radius;
+  final Widget? child;
+
+  const _FilledTile({
+    required this.fill,
+    required this.border,
+    required this.soft,
+    required this.radius,
+    this.progress,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: Container(
+        decoration: BoxDecoration(
+          color: fill,
+          border: Border.all(color: border, width: 2),
+          borderRadius: BorderRadius.circular(radius),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (progress != null)
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: FractionallySizedBox(
+                    heightFactor: progress,
+                    widthFactor: 1,
+                    child: ColoredBox(color: soft),
+                  ),
+                ),
+              ),
+            ?child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Illustration extends StatelessWidget {
+  const _Illustration();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mm;
+    Widget tile({Color? fill, double? progress}) => _FilledTile(
+      fill: fill ?? c.surface,
+      border: c.line,
+      soft: c.accentSoft,
+      progress: progress,
+      radius: 5,
+    );
+    return SizedBox(
+      width: 150,
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: GridView.count(
+          crossAxisCount: 3,
+          mainAxisSpacing: 5,
+          crossAxisSpacing: 5,
+          padding: EdgeInsets.zero,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            tile(),
+            tile(fill: c.accent),
+            tile(progress: 0.5),
+            tile(progress: 0.3),
+            Container(
+              decoration: BoxDecoration(
+                color: c.center,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Icon(Icons.flag_rounded, size: 24, color: c.centerLabel),
+            ),
+            tile(fill: c.accent),
+            tile(progress: 0.7),
+            tile(),
+            const DashedBox(radius: 5),
+          ],
+        ),
       ),
     );
   }

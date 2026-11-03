@@ -1,3 +1,5 @@
+enum GoalStatus { empty, todo, inProgress, done }
+
 class ChecklistItem {
   final int? id;
   final int goalId;
@@ -51,6 +53,12 @@ class Goal {
     this.updatedAt,
     this.checklistItems = const [],
   });
+
+  GoalStatus get status {
+    if (title.isEmpty) return GoalStatus.empty;
+    if (progress >= 100) return GoalStatus.done;
+    return progress > 0 ? GoalStatus.inProgress : GoalStatus.todo;
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -172,6 +180,11 @@ class MandalartBoard {
       subGoals: subGoals ?? this.subGoals,
     );
   }
+
+  int get filledCount => subGoals.where((g) => g.title.isNotEmpty).length;
+
+  int get completedCount =>
+      subGoals.where((g) => g.status == GoalStatus.done).length;
 
   int get overallProgress {
     final filledGoals = subGoals.where((goal) => goal.title.isNotEmpty);

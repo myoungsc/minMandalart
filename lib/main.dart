@@ -4,7 +4,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/settings_provider.dart';
 import 'screens/home_screen.dart';
-import 'screens/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,9 +43,6 @@ class MyApp extends ConsumerWidget {
       supportedLocales: context.supportedLocales,
       locale: context.locale,
       home: const HomeScreen(),
-      routes: {
-        '/settings': (context) => const SettingsScreen(),
-      },
     );
   }
 }

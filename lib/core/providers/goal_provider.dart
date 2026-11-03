@@ -76,7 +76,23 @@ class CurrentBoardNotifier extends StateNotifier<MandalartBoard?> {
     state = null;
   }
 
-  Future<void> updateGoal(Goal goal) => _writeAndRefresh(() => _db.updateGoal(goal));
+  Future<void> updateGoalText(int goalId, String title, String? description) =>
+      _writeAndRefresh(() => _db.updateGoalText(goalId, title, description));
+
+  Future<void> updateBoardText(String centerGoal, String? description) {
+    final board = state;
+    if (board == null) return Future.value();
+    return _writeAndRefresh(
+      () => _db.updateMandalartBoard(
+        board.copyWith(
+          centerGoal: centerGoal,
+          description: description,
+          clearDescription: description == null,
+          updatedAt: DateTime.now(),
+        ),
+      ),
+    );
+  }
 
   Future<void> clearGoal(int goalId) =>
       _writeAndRefresh(() => _db.clearGoal(goalId));
