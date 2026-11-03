@@ -143,6 +143,8 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
+      // 행마다 별도 요소로 둔다. 합쳐지면 스크린리더가 행을 구분해 누를 수 없다.
+      container: true,
       inMutuallyExclusiveGroup: selected != null,
       checked: selected,
       child: InkWell(

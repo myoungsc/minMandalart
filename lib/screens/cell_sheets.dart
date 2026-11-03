@@ -366,10 +366,13 @@ class _CellSheetState extends ConsumerState<_CellSheet> {
         children: [
           Transform.translate(
             offset: const Offset(-11, 0),
-            child: Checkbox(
-              value: item.isDone,
-              onChanged: (value) =>
-                  _guard(_notifier.setChecklistItemDone(item, value ?? false)),
+            child: Semantics(
+              label: item.title,
+              child: Checkbox(
+                value: item.isDone,
+                onChanged: (value) =>
+                    _guard(_notifier.setChecklistItemDone(item, value ?? false)),
+              ),
             ),
           ),
           Expanded(

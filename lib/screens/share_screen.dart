@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -36,9 +37,29 @@ class _ShareScreenState extends State<ShareScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _generate());
   }
 
+  /// 새 화면은 전환 첫 프레임에 아직 그려지지 않으므로, 전환이 끝나고 그려진 뒤에 캡처한다.
+  Future<void> _waitUntilPainted() async {
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation != null && !animation.isCompleted) {
+      final settled = Completer<void>();
+      void listener(AnimationStatus status) {
+        if (status.isCompleted || status.isDismissed) {
+          animation.removeStatusListener(listener);
+          settled.complete();
+        }
+      }
+
+      animation.addStatusListener(listener);
+      await settled.future;
+    }
+    await WidgetsBinding.instance.endOfFrame;
+  }
+
   Future<void> _generate() async {
     setState(() => _failed = false);
     try {
+      await _waitUntilPainted();
+      if (!mounted) return;
       final boundary =
           _cardKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
       final image = await boundary.toImage(pixelRatio: _outputSize / _cardSize);

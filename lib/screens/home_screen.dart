@@ -45,10 +45,14 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           Expanded(
-            child: Navigator(
-              key: detailNavigatorKey,
-              onGenerateRoute: (_) =>
-                  MaterialPageRoute(builder: (_) => const _DetailRoot()),
+            // 경계가 없으면 화면이 먼저 그려진 왼쪽 목록의 접근성 정보까지 차단한다.
+            child: Semantics(
+              container: true,
+              child: Navigator(
+                key: detailNavigatorKey,
+                onGenerateRoute: (_) =>
+                    MaterialPageRoute(builder: (_) => const _DetailRoot()),
+              ),
             ),
           ),
         ],

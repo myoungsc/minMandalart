@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mandalart/core/db/sqlite_helper.dart';
@@ -501,7 +504,52 @@ void main() {
     });
   });
 
+  group('공유', () {
+    testWidgets('화면 전환 뒤 1080×1080 이미지를 만들고 공유 버튼이 켜진다', (tester) async {
+      final dir = await tester.runAsync(() => Directory.systemTemp.createTemp('share'));
+      addTearDown(() => dir!.deleteSync(recursive: true));
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/path_provider'),
+        (_) async => dir!.path,
+      );
+
+      await pumpApp(tester, boards: [_board()]);
+      await openBoard(tester);
+      await tester.tap(find.text('board.share'));
+
+      // 앱 쪽은 가상 시간, 이미지 생성은 실제 시간이 필요해 번갈아 진행한다.
+      // 전환 첫 프레임에 캡처하면 그려지지 않은 화면이라 실패한다.
+      File? image;
+      for (int i = 0; i < 100 && image == null; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 20));
+          final files = dir!.listSync().whereType<File>();
+          if (files.isNotEmpty && files.first.lengthSync() > 0) image = files.first;
+        });
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.textContaining('common.error'), findsNothing);
+      expect(image, isNotNull, reason: '이미지 파일이 만들어져야 한다');
+      final bytes = await tester.runAsync(() => image!.readAsBytes());
+      final data = ByteData.sublistView(bytes!);
+      expect(data.getUint32(16), 1080, reason: 'PNG 폭');
+      expect(data.getUint32(20), 1080, reason: 'PNG 높이');
+    });
+  });
+
   group('설정', () {
+    testWidgets('각 행은 스크린리더에서 별도 요소다', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpApp(tester);
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+
+      expect(find.bySemanticsLabel('settings.about'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp(r'^settings\.version')), findsOneWidget);
+      semantics.dispose();
+    });
+
     testWidgets('테마를 고르면 바로 적용된다', (tester) async {
       await pumpApp(tester);
       await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
@@ -531,6 +579,16 @@ void main() {
       await tapAndSettle(tester, find.text('Second').first);
       expect(find.text('Second'), findsWidgets);
       expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
+    });
+
+    testWidgets('왼쪽 목록도 스크린리더에서 읽을 수 있다', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpApp(tester, boards: [_board()], width: 1000);
+
+      // 툴팁은 라벨이 아니라 tooltip으로 노출되므로 글자 요소로 확인한다.
+      expect(find.bySemanticsLabel('home.my_boards'), findsOneWidget);
+      expect(find.bySemanticsLabel('board.share'), findsOneWidget);
+      semantics.dispose();
     });
 
     testWidgets('접고 펼쳐도 보던 보드가 유지된다', (tester) async {
