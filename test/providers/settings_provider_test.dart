@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mandalart/core/providers/settings_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('AppSettings 모델 테스트', () {
@@ -109,6 +110,34 @@ void main() {
 
       container1.dispose();
       container2.dispose();
+    });
+  });
+
+  group('테마 저장', () {
+    Future<ProviderContainer> launch() async {
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
+      return container;
+    }
+
+    test('고른 테마는 앱을 다시 켜도 유지된다', () async {
+      SharedPreferences.setMockInitialValues({});
+      final first = await launch();
+      expect(first.read(settingsProvider).themeMode, ThemeMode.light);
+
+      first.read(settingsProvider.notifier).setThemeMode(ThemeMode.dark);
+
+      final second = await launch();
+      expect(second.read(settingsProvider).themeMode, ThemeMode.dark);
+    });
+
+    test('저장된 값을 해석할 수 없으면 라이트로 시작한다', () async {
+      SharedPreferences.setMockInitialValues({'theme_mode': 'unknown'});
+      final container = await launch();
+      expect(container.read(settingsProvider).themeMode, ThemeMode.light);
     });
   });
 }

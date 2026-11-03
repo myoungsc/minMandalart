@@ -154,3 +154,6 @@
 
 ## 2026-11-03 10:32:32
 - 1.커밋 해주고, 2.추가해줘(테마 저장), 3.유지해줘(채운 칸 평균), 4.앱 아이콘은 miniManda App Icon.dc.html 로 진행해줘 (https://claude.ai/design/p/309267cd-b43f-403a-88c2-9be7f8b44077?file=miniManda+App+Icon.dc.html)
+
+## 2026-11-03 10:45:21
+- 커밋해주고 Android 에뮬레이터에서 확인해줘
