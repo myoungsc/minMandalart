@@ -36,7 +36,7 @@
     "share": "보드 공유하기",
     "fill": "채우기",
     "empty_cell": "빈 칸, 세부 목표 추가",
-    "edit_center": "중앙 목표 수정",
+    "edit_center": "핵심 목표 수정",
     "status_todo": "진행 전",
     "status_done": "완료",
     "status_in_progress": "진행 중 {pct}%",
@@ -77,7 +77,7 @@
     "cleared": "칸을 비웠어요"
   },
   "center": {
-    "sheet_label": "중앙 목표 수정",
+    "sheet_label": "핵심 목표 수정",
     "error": "핵심 목표는 비워 둘 수 없어요",
     "helper": "보드 가운데 칸과 공유 이미지에 표시돼요"
   },

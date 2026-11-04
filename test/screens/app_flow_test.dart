@@ -219,6 +219,7 @@ void main() {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: theme,
+          builder: dismissKeyboardOnTap,
           home: const HomeScreen(),
         ),
       ),
@@ -287,6 +288,81 @@ void main() {
       expect(db.boards, isEmpty);
       expect(find.text('home.empty_title'), findsOneWidget);
       expect(find.text('board.deleted'), findsOneWidget);
+    });
+  });
+
+  group('키보드와 안전 영역', () {
+    bool typing() =>
+        FocusManager.instance.primaryFocus?.context
+            ?.findAncestorWidgetOfExactType<EditableText>() !=
+        null;
+
+    testWidgets('화면에서 빈 곳을 누르면 키보드가 내려간다', (tester) async {
+      await pumpApp(tester);
+      await tapAndSettle(tester, find.text('home.first_board'));
+
+      await tapAndSettle(tester, find.byType(TextField).first);
+      expect(typing(), isTrue);
+      await tapAndSettle(tester, find.text('common.description_optional'));
+      expect(typing(), isFalse);
+    });
+
+    testWidgets('시트에서 빈 곳을 누르면 키보드만 내려가고 시트는 유지된다', (tester) async {
+      await pumpApp(tester, boards: [_board()]);
+      await openBoard(tester);
+      await tapAndSettle(tester, find.text('board.fill').first);
+
+      await tapAndSettle(tester, sheetField());
+      expect(typing(), isTrue);
+      await tapAndSettle(tester, find.text('cell.memo_label'));
+      expect(typing(), isFalse);
+      expect(sheetField(), findsOneWidget);
+    });
+
+    testWidgets('새 보드의 만들기 버튼은 키보드 위로 올라온다', (tester) async {
+      await pumpApp(tester);
+      await tapAndSettle(tester, find.text('home.first_board'));
+
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpAndSettle();
+      expect(tester.getBottomLeft(find.text('new.create')).dy, lessThan(1300));
+
+      final button = tester.getRect(find.byType(PrimaryButton));
+      expect(button.left, 20);
+      expect(button.right, 480);
+    });
+
+    testWidgets('키보드를 올린 낮은 화면에서도 새 보드가 넘치지 않는다', (tester) async {
+      await pumpApp(tester);
+      await tapAndSettle(tester, find.text('home.first_board'));
+
+      tester.view.physicalSize = const Size(800, 360);
+      tester.view.viewInsets = const FakeViewPadding(bottom: 200);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('화면 내용이 왼쪽 안전 영역을 침범하지 않는다', (tester) async {
+      await pumpApp(tester, boards: [_board()]);
+      tester.view.padding = const FakeViewPadding(left: 60);
+      addTearDown(tester.view.resetPadding);
+      await tester.pumpAndSettle();
+      double left() => tester.getTopLeft(find.byType(SingleChildScrollView).last).dx;
+
+      await tapAndSettle(tester, find.text('home.new_board'));
+      expect(left(), 60);
+      await tapAndSettle(tester, find.byIcon(Icons.close_rounded));
+
+      await openBoard(tester);
+      expect(left(), 60);
+
+      // 공유 화면은 이미지를 만드는 동안 로딩 표시가 계속 돌아 settle을 쓸 수 없다.
+      await tester.tap(find.text('board.share'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(left(), 60);
     });
   });
 

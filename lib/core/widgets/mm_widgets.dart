@@ -184,6 +184,16 @@ class PrimaryButton extends StatelessWidget {
   }
 }
 
+/// 앱 전체에서 빈 곳을 누르면 키보드를 내린다. MaterialApp.builder에 넣는다.
+Widget dismissKeyboardOnTap(BuildContext context, Widget? child) {
+  return GestureDetector(
+    behavior: HitTestBehavior.translucent,
+    excludeFromSemantics: true,
+    onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+    child: child,
+  );
+}
+
 /// 화면 하단에 고정되는 주 버튼. Scaffold.bottomNavigationBar에 넣는다.
 class BottomAction extends StatelessWidget {
   final Widget child;

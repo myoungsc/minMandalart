@@ -16,66 +16,64 @@ class AboutMandalartScreen extends StatelessWidget {
         leading: const BackIcon(),
         title: Text('about.title'.tr()),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-          20,
-          8,
-          20,
-          32 + MediaQuery.paddingOf(context).bottom,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const ExcludeSemantics(child: _Illustration()),
-            const SizedBox(height: 22),
-            Text(
-              'about.heading'.tr(),
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-                height: 1.25,
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const ExcludeSemantics(child: _Illustration()),
+              const SizedBox(height: 22),
+              Text(
+                'about.heading'.tr(),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                  height: 1.25,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'about.intro'.tr(),
-              style: const TextStyle(fontSize: 16, height: 1.65),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'about.mini_note'.tr(),
-              style: TextStyle(fontSize: 15, height: 1.6, color: c.muted),
-            ),
-            const SizedBox(height: 22),
-            Text(
-              'about.how_to_use'.tr(),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 14),
-            _Step(
-              number: 1,
-              text: 'about.step1'.tr(),
-              fill: c.center,
-              foreground: c.onCenter,
-              border: c.center,
-            ),
-            _Step(number: 2, text: 'about.step2'.tr(), fill: c.surface, border: c.line),
-            _Step(
-              number: 3,
-              text: 'about.step3'.tr(),
-              fill: c.surface,
-              progress: 0.55,
-              border: c.line,
-            ),
-            _Step(
-              number: 4,
-              text: 'about.step4'.tr(),
-              fill: c.accent,
-              foreground: MmColors.onAccent,
-              border: c.line,
-            ),
-          ],
+              const SizedBox(height: 10),
+              Text(
+                'about.intro'.tr(),
+                style: const TextStyle(fontSize: 16, height: 1.65),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'about.mini_note'.tr(),
+                style: TextStyle(fontSize: 15, height: 1.6, color: c.muted),
+              ),
+              const SizedBox(height: 22),
+              Text(
+                'about.how_to_use'.tr(),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 14),
+              _Step(
+                number: 1,
+                text: 'about.step1'.tr(),
+                fill: c.center,
+                foreground: c.onCenter,
+                border: c.center,
+              ),
+              _Step(number: 2, text: 'about.step2'.tr(), fill: c.surface, border: c.line),
+              _Step(
+                number: 3,
+                text: 'about.step3'.tr(),
+                fill: c.surface,
+                progress: 0.55,
+                border: c.line,
+              ),
+              _Step(
+                number: 4,
+                text: 'about.step4'.tr(),
+                fill: c.accent,
+                foreground: MmColors.onAccent,
+                border: c.line,
+              ),
+            ],
+          ),
         ),
       ),
     );

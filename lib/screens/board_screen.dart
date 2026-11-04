@@ -42,118 +42,121 @@ class BoardScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              board.centerGoal,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-                height: 1.3,
-              ),
-            ),
-            if (board.description?.isNotEmpty ?? false) ...[
-              const SizedBox(height: 2),
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               Text(
-                board.description!,
-                style: TextStyle(fontSize: 14, height: 1.5, color: c.muted),
-              ),
-            ],
-            const SizedBox(height: 14),
-            Wrap(
-              crossAxisAlignment: WrapCrossAlignment.end,
-              spacing: 12,
-              runSpacing: 4,
-              children: [
-                Text(
-                  '${board.overallProgress}%',
-                  style: const TextStyle(
-                    fontSize: 44,
-                    fontWeight: FontWeight.w800,
-                    height: 1,
-                    letterSpacing: -1.5,
-                  ),
+                board.centerGoal,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                  height: 1.3,
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 3),
-                  child: Text(
-                    'board.stats'.tr(
-                      namedArgs: {
-                        'done': '${board.completedCount}',
-                        'filled': '${board.filledCount}',
-                      },
+              ),
+              if (board.description?.isNotEmpty ?? false) ...[
+                const SizedBox(height: 2),
+                Text(
+                  board.description!,
+                  style: TextStyle(fontSize: 14, height: 1.5, color: c.muted),
+                ),
+              ],
+              const SizedBox(height: 14),
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.end,
+                spacing: 12,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    '${board.overallProgress}%',
+                    style: const TextStyle(
+                      fontSize: 44,
+                      fontWeight: FontWeight.w800,
+                      height: 1,
+                      letterSpacing: -1.5,
                     ),
-                    style: TextStyle(fontSize: 13, color: c.muted, height: 1.4),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: Text(
+                      'board.stats'.tr(
+                        namedArgs: {
+                          'done': '${board.completedCount}',
+                          'filled': '${board.filledCount}',
+                        },
+                      ),
+                      style: TextStyle(fontSize: 13, color: c.muted, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ExcludeSemantics(child: _ProgressSegments(board: board)),
+              if (board.completedCount == 8) ...[
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: c.accent,
+                    border: Border.all(color: c.line, width: 2),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.celebration_rounded, size: 22, color: MmColors.onAccent),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'board.all_done'.tr(),
+                          style: const TextStyle(
+                            color: MmColors.onAccent,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 8),
-            ExcludeSemantics(child: _ProgressSegments(board: board)),
-            if (board.completedCount == 8) ...[
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: c.accent,
-                  border: Border.all(color: c.line, width: 2),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
+              if (board.filledCount == 0) ...[
+                const SizedBox(height: 14),
+                Row(
                   children: [
-                    const Icon(Icons.celebration_rounded, size: 22, color: MmColors.onAccent),
-                    const SizedBox(width: 10),
+                    Icon(Icons.touch_app_rounded, size: 20, color: c.muted),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'board.all_done'.tr(),
-                        style: const TextStyle(
-                          color: MmColors.onAccent,
+                        'board.all_empty'.tr(),
+                        style: TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
+                          color: c.muted,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-            if (board.filledCount == 0) ...[
+              ],
               const SizedBox(height: 14),
-              Row(
+              GridView.count(
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                padding: EdgeInsets.zero,
+                physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  Icon(Icons.touch_app_rounded, size: 20, color: c.muted),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'board.all_empty'.tr(),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: c.muted,
-                      ),
-                    ),
-                  ),
+                  for (int i = 0; i < 9; i++)
+                    if (i == 4) _CenterCell(board: board) else _gridCell(board, i > 4 ? i - 1 : i),
                 ],
               ),
             ],
-            const SizedBox(height: 14),
-            GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              padding: EdgeInsets.zero,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                for (int i = 0; i < 9; i++)
-                  if (i == 4) _CenterCell(board: board) else _gridCell(board, i > 4 ? i - 1 : i),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
