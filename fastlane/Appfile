@@ -1,0 +1,8 @@
+for_platform :ios do
+  app_identifier "co.kr.myoung.ios.miniMandalart"
+  team_id "RM5FE27WRY"
+end
+
+for_platform :android do
+  package_name "co.kr.myoung.aos.miniMandalart"
+end
