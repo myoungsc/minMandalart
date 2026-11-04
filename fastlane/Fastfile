@@ -1,0 +1,73 @@
+# 사용법 (프로젝트 루트에서)
+#   fastlane ios beta              빌드 → TestFlight 업로드 (심사 제출은 직접)
+#   fastlane android build         AAB만 빌드 (Play Console 첫 업로드용)
+#   fastlane android internal      빌드 → Play 내부 테스트 트랙 업로드
+#   fastlane android internal validate_only:true   업로드 없이 Play 검증만
+#
+# 버전은 pubspec.yaml 에서 관리한다. (lane 은 버전을 바꾸지 않는다)
+# 인증 정보는 ~/.appstore/ 의 공통 키를 쓴다.
+#   ~/.appstore/env                       ASC_KEY_ID, ASC_ISSUER_ID
+#   ~/.appstore/AuthKey_<ASC_KEY_ID>.p8   App Store Connect API 키
+#   ~/.appstore/play-service-account.json Play 서비스 계정 키
+# 다른 키를 쓰려면 fastlane/.env 에 값을 적는다. (.env.example 참고, 먼저 적용된다)
+
+require "dotenv"
+Dotenv.load(File.expand_path("~/.appstore/env")) # 이미 있는 값은 덮어쓰지 않는다
+ENV["ASC_KEY_PATH"] ||= "~/.appstore/AuthKey_#{ENV['ASC_KEY_ID']}.p8" if ENV["ASC_KEY_ID"]
+ENV["PLAY_JSON_KEY_PATH"] ||= "~/.appstore/play-service-account.json"
+
+ROOT = File.expand_path("..", __dir__)
+
+# 값이 비었거나 파일이 없으면 빌드 전에 멈춘다.
+def require_env!(keys, file_keys)
+  missing = keys.select { |k| ENV[k].to_s.strip.empty? }
+  missing += file_keys.reject { |k| ENV[k].to_s.strip.empty? || File.exist?(File.expand_path(ENV[k])) }
+                      .map { |k| "#{k} (파일 없음: #{ENV[k]})" }
+  UI.user_error!("인증 정보 확인 필요(~/.appstore 또는 fastlane/.env): #{missing.join(', ')}") unless missing.empty?
+end
+
+platform :ios do
+  desc "빌드 → TestFlight 업로드"
+  lane :beta do
+    require_env!(%w[ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH], %w[ASC_KEY_PATH])
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: File.expand_path(ENV["ASC_KEY_PATH"])
+    )
+
+    # 서명은 Xcode 에 로그인된 계정으로 한다.
+    FileUtils.rm_rf(File.join(ROOT, "build/ios/ipa"))
+    sh("cd #{ROOT} && flutter build ipa --release")
+
+    upload_to_testflight(
+      api_key: api_key,
+      ipa: Dir[File.join(ROOT, "build/ios/ipa/*.ipa")].first,
+      skip_waiting_for_build_processing: true
+    )
+  end
+end
+
+platform :android do
+  desc "AAB만 빌드 (Play Console 첫 업로드용)"
+  lane :build do
+    sh("cd #{ROOT} && flutter build appbundle --release")
+  end
+
+  desc "빌드 → Play 내부 테스트 트랙 업로드"
+  lane :internal do |options|
+    require_env!(%w[PLAY_JSON_KEY_PATH], %w[PLAY_JSON_KEY_PATH])
+
+    sh("cd #{ROOT} && flutter build appbundle --release")
+
+    upload_to_play_store(
+      track: "internal",
+      aab: File.join(ROOT, "build/app/outputs/bundle/release/app-release.aab"),
+      json_key: File.expand_path(ENV["PLAY_JSON_KEY_PATH"]),
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      validate_only: options[:validate_only] || false
+    )
+  end
+end
