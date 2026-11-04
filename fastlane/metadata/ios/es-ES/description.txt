@@ -1,0 +1,17 @@
+miniManda convierte el método Mandalart en un tablero 3x3 sencillo que puedes empezar en un minuto.
+
+Escribe tu objetivo central en el medio y añade hasta ocho subobjetivos alrededor. El Mandalart tradicional tiene 81 casillas, pero con nueve basta para empezar.
+
+QUÉ PUEDES HACER
+• Crear un tablero para cada objetivo
+• Añadir una nota y una lista de acciones a cada subobjetivo
+• Ver cómo el progreso se calcula solo al marcar elementos
+• Marcar como lista una casilla que no tiene lista de acciones
+• Compartir tu tablero como imagen cuadrada
+• Usar el tema claro u oscuro, o seguir el ajuste del dispositivo
+
+PENSADO PARA SER SENCILLO
+No necesitas registrarte. Tus tableros se guardan en el dispositivo.
+En tabletas y móviles plegables abiertos, verás la lista de tableros junto al tablero.
+
+Disponible en español, inglés, coreano, japonés, francés y ruso.

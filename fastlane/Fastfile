@@ -3,6 +3,8 @@
 #   fastlane android build         AAB만 빌드 (Play Console 첫 업로드용)
 #   fastlane android internal      빌드 → Play 내부 테스트 트랙 업로드
 #   fastlane android internal validate_only:true   업로드 없이 Play 검증만
+#   fastlane ios metadata          소개 문구만 App Store Connect에 반영 (심사 제출 안 함)
+#   fastlane android metadata      소개 문구만 Play에 반영
 #
 # 버전은 pubspec.yaml 에서 관리한다. (lane 은 버전을 바꾸지 않는다)
 # 인증 정보는 ~/.appstore/ 의 공통 키를 쓴다.
@@ -46,6 +48,25 @@ platform :ios do
       skip_waiting_for_build_processing: true
     )
   end
+
+  desc "소개 문구만 App Store Connect에 반영 (심사 제출 안 함)"
+  lane :metadata do
+    require_env!(%w[ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH], %w[ASC_KEY_PATH])
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: File.expand_path(ENV["ASC_KEY_PATH"])
+    )
+    upload_to_app_store(
+      api_key: api_key,
+      metadata_path: File.join(ROOT, "fastlane/metadata/ios"),
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      submit_for_review: false,
+      run_precheck_before_submit: false,
+      force: true
+    )
+  end
 end
 
 platform :android do
@@ -68,6 +89,19 @@ platform :android do
       skip_upload_images: true,
       skip_upload_screenshots: true,
       validate_only: options[:validate_only] || false
+    )
+  end
+
+  desc "소개 문구만 Play에 반영"
+  lane :metadata do
+    require_env!(%w[PLAY_JSON_KEY_PATH], %w[PLAY_JSON_KEY_PATH])
+    upload_to_play_store(
+      json_key: File.expand_path(ENV["PLAY_JSON_KEY_PATH"]),
+      metadata_path: File.join(ROOT, "fastlane/metadata/android"),
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
     )
   end
 end

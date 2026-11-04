@@ -1,0 +1,1 @@
+goal,planner,habit,mandala,chart,checklist,todo,progress,resolution,tracker
