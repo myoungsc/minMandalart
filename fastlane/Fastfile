@@ -5,6 +5,10 @@
 #   fastlane android internal validate_only:true   업로드 없이 Play 검증만
 #   fastlane ios metadata          소개 문구만 App Store Connect에 반영 (심사 제출 안 함)
 #   fastlane android metadata      소개 문구만 Play에 반영
+#   fastlane ios screenshots       fastlane/screenshots/<locale>/ 를 App Store Connect에 반영 (덮어씀)
+#   fastlane android screenshots   metadata/android/<locale>/images/phoneScreenshots/ 를 Play에 반영
+#
+# fastlane/screenshots_duo/ 의 iPhone Duo(2007×2853)는 이 fastlane 버전이 몰라서 콘솔에서 직접 올린다.
 #
 # 버전은 pubspec.yaml 에서 관리한다. (lane 은 버전을 바꾸지 않는다)
 # 인증 정보는 ~/.appstore/ 의 공통 키를 쓴다.
@@ -67,6 +71,26 @@ platform :ios do
       force: true
     )
   end
+
+  desc "스크린샷만 App Store Connect에 반영 (기존 것을 덮어씀, 심사 제출 안 함)"
+  lane :screenshots do
+    require_env!(%w[ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH], %w[ASC_KEY_PATH])
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: File.expand_path(ENV["ASC_KEY_PATH"])
+    )
+    upload_to_app_store(
+      api_key: api_key,
+      screenshots_path: File.join(ROOT, "fastlane/screenshots"),
+      skip_metadata: true,
+      skip_binary_upload: true,
+      overwrite_screenshots: true,
+      submit_for_review: false,
+      run_precheck_before_submit: false,
+      force: true
+    )
+  end
 end
 
 platform :android do
@@ -102,6 +126,21 @@ platform :android do
       skip_upload_aab: true,
       skip_upload_images: true,
       skip_upload_screenshots: true
+    )
+  end
+
+  desc "스크린샷만 Play에 반영 (아이콘·그래픽 이미지는 올리지 않음)"
+  lane :screenshots do
+    require_env!(%w[PLAY_JSON_KEY_PATH], %w[PLAY_JSON_KEY_PATH])
+    upload_to_play_store(
+      json_key: File.expand_path(ENV["PLAY_JSON_KEY_PATH"]),
+      metadata_path: File.join(ROOT, "fastlane/metadata/android"),
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: false
     )
   end
 end
