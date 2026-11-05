@@ -83,6 +83,8 @@ platform :ios do
     upload_to_app_store(
       api_key: api_key,
       screenshots_path: File.join(ROOT, "fastlane/screenshots"),
+      # skip_metadata 여도 metadata_path 폴더 이름을 검사하므로 ios 폴더를 지정한다.
+      metadata_path: File.join(ROOT, "fastlane/metadata/ios"),
       skip_metadata: true,
       skip_binary_upload: true,
       overwrite_screenshots: true,

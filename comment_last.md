@@ -223,3 +223,6 @@
 
 ## 2026-11-05 01:02:29
 - 다른 모델에 전달할 지시문 작성, 클로드 디자인(miniManda Store Screenshots) 참고해 iOS/AOS 스토어 스크린샷 제작 후 스토어 업데이트
+
+## 2026-11-05 10:16:41
+- ios screenshots 레인 오류(metadata 폴더 검증) 수정
