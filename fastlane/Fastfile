@@ -8,7 +8,9 @@
 #   fastlane ios screenshots       fastlane/screenshots/<locale>/ 를 App Store Connect에 반영 (덮어씀)
 #   fastlane android screenshots   metadata/android/<locale>/images/phoneScreenshots/ 를 Play에 반영
 #
-# fastlane/screenshots_duo/ 의 iPhone Duo(2007×2853)는 이 fastlane 버전이 몰라서 콘솔에서 직접 올린다.
+# 스크린샷 폴더: fastlane/screenshots/<locale>/ 에 파일 이름 순서대로. 크기로 기기를 구분한다.
+#   iPhone 6.7형 1290×2796, iPhone Duo 2007×2853 (fastlane 2.241.1 이상 필요)
+#   locale 은 metadata/ios 와 같게: en-US, ko, ja, es-ES, fr-FR, ru. 없는 언어는 기본 언어(ko) 것을 따른다.
 #
 # 버전은 pubspec.yaml 에서 관리한다. (lane 은 버전을 바꾸지 않는다)
 # 인증 정보는 ~/.appstore/ 의 공통 키를 쓴다.
