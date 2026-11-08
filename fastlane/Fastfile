@@ -128,6 +128,8 @@ platform :android do
       metadata_path: File.join(ROOT, "fastlane/metadata/android"),
       skip_upload_apk: true,
       skip_upload_aab: true,
+      # 변경 내역은 빌드(version code)에 붙으므로 빌드 업로드 없이 올리면 실패한다.
+      skip_upload_changelogs: true,
       skip_upload_images: true,
       skip_upload_screenshots: true
     )

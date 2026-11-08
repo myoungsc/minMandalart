@@ -232,3 +232,12 @@
 
 ## 2026-11-05 10:41:08
 - 언어별 스토어 스크린샷 디자인(아티팩트) 확인 후 fastlane으로 언어별 업로드
+
+## 2026-11-05 12:43:38
+- 4개 언어도 사용할수 있게 앱에서 작업해주고, 스토어에도 추가해줘 구글, 애플 둘다
+
+## 2026-11-05 16:18:54
+- 업로드 끝났어 스토어 상태 확인해줘
+
+## 2026-11-08 19:47:55
+- android metadata 실패: en-US - Cannot find changelog because no version code given - please specify :version_code
