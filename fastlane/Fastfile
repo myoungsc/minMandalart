@@ -7,6 +7,7 @@
 #   fastlane android metadata      소개 문구만 Play에 반영
 #   fastlane ios screenshots       fastlane/screenshots/<locale>/ 를 App Store Connect에 반영 (덮어씀)
 #   fastlane android screenshots   metadata/android/<locale>/images/phoneScreenshots/ 를 Play에 반영
+#   fastlane android images        metadata/android/<locale>/images/ 의 icon.png, featureGraphic.png 를 Play에 반영
 #
 # 스크린샷 폴더: fastlane/screenshots/<locale>/ 에 파일 이름 순서대로. 크기로 기기를 구분한다.
 #   iPhone 6.7형 1290×2796, iPhone Duo 2007×2853 (fastlane 2.241.1 이상 필요)
@@ -147,6 +148,21 @@ platform :android do
       skip_upload_changelogs: true,
       skip_upload_images: true,
       skip_upload_screenshots: false
+    )
+  end
+
+  desc "앱 아이콘(512×512)·그래픽 이미지(1024×500)만 Play에 반영"
+  lane :images do
+    require_env!(%w[PLAY_JSON_KEY_PATH], %w[PLAY_JSON_KEY_PATH])
+    upload_to_play_store(
+      json_key: File.expand_path(ENV["PLAY_JSON_KEY_PATH"]),
+      metadata_path: File.join(ROOT, "fastlane/metadata/android"),
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: false,
+      skip_upload_screenshots: true
     )
   end
 end
