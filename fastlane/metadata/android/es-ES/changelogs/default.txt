@@ -1,1 +1,7 @@
-Primera versión de miniManda.
+La primera versión de miniManda.
+• Organiza un objetivo principal y 8 subobjetivos en un tablero 3x3
+• Añade notas y una lista de acciones a cada subobjetivo
+• El progreso se calcula automáticamente al marcar tareas
+• Comparte tu tablero como imagen cuadrada
+• Temas claro y oscuro, disponible en 6 idiomas
+Sin registro. Tus tableros se guardan en tu dispositivo.

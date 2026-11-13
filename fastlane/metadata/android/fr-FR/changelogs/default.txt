@@ -1,1 +1,7 @@
-Première version de miniManda.
+La première version de miniManda.
+• Organisez un objectif central et 8 sous-objectifs sur une grille 3x3
+• Ajoutez des notes et une checklist d'actions à chaque sous-objectif
+• La progression se calcule automatiquement quand vous cochez
+• Partagez votre grille sous forme d'image carrée
+• Thèmes clair et sombre, disponible en 6 langues
+Sans inscription. Vos grilles restent sur votre appareil.

@@ -1,1 +1,7 @@
-First release of miniManda.
+The first release of miniManda.
+• Put one core goal and 8 sub-goals on a 3x3 board
+• Add notes and an action checklist to each sub-goal
+• Progress is calculated automatically as you check items
+• Share your board as a square image
+• Light and dark themes, available in 6 languages
+No sign-up needed. Your boards stay on your device.

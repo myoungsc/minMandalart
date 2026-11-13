@@ -241,3 +241,9 @@
 
 ## 2026-11-08 19:47:55
 - android metadata 실패: en-US - Cannot find changelog because no version code given - please specify :version_code
+
+## 2026-11-08 20:09:26
+- 업로드 끝났어 플레이 스토어 상태 확인해줘
+
+## 2026-11-13 14:53:06
+- 첫 출시 노트 작성해주고 aos에는 복사 붙여넣기 할게 , ios는 언어별로 올려줘
