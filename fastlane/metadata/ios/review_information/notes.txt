@@ -1,0 +1,27 @@
+Thank you for reviewing miniManda.
+
+1. Screen recording
+The attached screen recording was captured on a physical iPhone running the latest iOS. It starts at app launch and shows the typical flow: creating a board, adding sub-goals, using the checklist, sharing a board, settings, and deleting a board.
+The app has no account registration or login, no user-generated content shared with other users, and no paid content or in-app purchases.
+
+2. Purpose and target audience
+miniManda is a simple goal-planning app based on the Mandalart method: one core goal in the center, surrounded by 8 sub-goals. A traditional Mandalart has 81 cells, which many people find overwhelming. miniManda reduces it to a single 3x3 board so anyone can start in a minute.
+It is for students, working adults, and anyone who sets personal goals (study, health, career, habits). It helps users break one goal into 8 concrete parts, attach an action checklist to each part, and see their progress at a glance.
+
+3. How to use the main features (no login or sample files needed)
+- Launch the app and tap "Create my first Mandalart" (or the + button when boards already exist).
+- Enter a core goal (e.g. "Improve my spoken English") and tap "Create".
+- On the board, tap an empty cell to add a sub-goal. In the sheet you can write a memo, mark the cell as done, or add checklist items. Progress is calculated from the checked items.
+- Tap the center cell to edit the core goal.
+- Use the board menu (top right) to share the board as a square image through the iOS share sheet, or to delete the board.
+- Settings (gear icon on the home screen): Light / Dark / Follow system theme, "About Mandalart", and app version.
+- On iPad, the board list and the selected board are shown side by side.
+
+4. External services
+None. The app does not connect to the internet. All data is stored only on the device. The app uses no third-party services or SDKs for analytics, ads, authentication, payments, or AI. Sharing uses the standard iOS share sheet.
+
+5. Regional differences
+None. The app works the same in all regions. The interface is localized in Korean, English, Japanese, Spanish, French, and Russian, and follows the device language.
+
+6. Regulated industry or third-party material
+Not applicable. The app does not operate in a regulated industry and does not include protected third-party material. "Mandalart" is mentioned only to describe the goal-setting method in the in-app guide.
