@@ -15,13 +15,15 @@ It is for students, working adults, and anyone who sets personal goals (study, h
 - Tap the center cell to edit the core goal.
 - Use the board menu (top right) to share the board as a square image through the iOS share sheet, or to delete the board.
 - Settings (gear icon on the home screen): Light / Dark / Follow system theme, "About Mandalart", and app version.
+- Ads: a banner ad is shown at the bottom of the home and board screens, and an interstitial ad may be shown right after a new board is created.
 - On iPad, the board list and the selected board are shown side by side.
 
 4. External services
-None. The app does not connect to the internet. All data is stored only on the device. The app uses no third-party services or SDKs for analytics, ads, authentication, payments, or AI. Sharing uses the standard iOS share sheet.
+- Google AdMob (Google Mobile Ads SDK) to show banner and interstitial ads. Only non-personalized ads are requested, and the app does not request App Tracking Transparency permission. For users in regions that require consent (such as the EEA and UK), Google's User Messaging Platform consent form is shown before ads are requested.
+- No other services. Boards, notes, and checklists are stored only on the device and are never sent to a server. The app uses no services for analytics, authentication, payments, or AI. Sharing uses the standard iOS share sheet.
 
 5. Regional differences
-None. The app works the same in all regions. The interface is localized in Korean, English, Japanese, Spanish, French, and Russian, and follows the device language.
+None in features or content. Ads may require a consent form first in regions such as the EEA and UK. Otherwise the app works the same in all regions. The interface is localized in Korean, English, Japanese, Spanish, French, and Russian, and follows the device language.
 
 6. Regulated industry or third-party material
 Not applicable. The app does not operate in a regulated industry and does not include protected third-party material. "Mandalart" is mentioned only to describe the goal-setting method in the in-app guide.

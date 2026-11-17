@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/ads/ads.dart';
 import '../core/providers/goal_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/mm_widgets.dart';
@@ -33,12 +34,15 @@ class BoardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      bottomNavigationBar: BottomAction(
-        child: PrimaryButton(
-          label: 'board.share'.tr(),
-          icon: Icons.ios_share_rounded,
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => ShareScreen(board: board)),
+      bottomNavigationBar: AdBanner(
+        unit: AdUnit.boardBanner,
+        above: BottomAction(
+          child: PrimaryButton(
+            label: 'board.share'.tr(),
+            icon: Icons.ios_share_rounded,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => ShareScreen(board: board)),
+            ),
           ),
         ),
       ),

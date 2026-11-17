@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mandalart/core/ads/ad_banner.dart';
+import 'package:mandalart/core/ads/ads.dart';
 import 'package:mandalart/core/db/sqlite_helper.dart';
 import 'package:mandalart/core/providers/goal_provider.dart';
 import 'package:mandalart/core/theme/app_theme.dart';
@@ -27,7 +27,9 @@ class _FakeDb implements SQLiteHelper {
       final goals = boards[i].subGoals;
       final index = goals.indexWhere((g) => g.id == goal.id);
       if (index >= 0) {
-        boards[i] = boards[i].copyWith(subGoals: [...goals]..[index] = goal);
+        boards[i] = boards[i].copyWith(
+          subGoals: [...goals]..[index] = goal,
+        );
       }
     }
   }
@@ -83,11 +85,7 @@ class _FakeDb implements SQLiteHelper {
   }
 
   @override
-  Future<void> updateGoalText(
-    int goalId,
-    String title,
-    String? description,
-  ) async {
+  Future<void> updateGoalText(int goalId, String title, String? description) async {
     _replaceGoal(
       _goal(goalId).copyWith(
         title: title,
@@ -160,10 +158,7 @@ class _FakeDb implements SQLiteHelper {
   Future<void> deleteChecklistItem(ChecklistItem item) async {
     final goal = _goal(item.goalId);
     _replaceGoal(
-      _syncProgress(
-        goal,
-        goal.checklistItems.where((i) => i.id != item.id).toList(),
-      ),
+      _syncProgress(goal, goal.checklistItems.where((i) => i.id != item.id).toList()),
     );
   }
 
@@ -264,18 +259,15 @@ void main() {
       db = _FakeDb()..failRead = true;
       final container = ProviderContainer(
         overrides: [
-          databaseProvider.overrideWithValue(db),
-          adsEnabledProvider.overrideWithValue(false),
-        ],
+        databaseProvider.overrideWithValue(db),
+        adsEnabledProvider.overrideWithValue(false),
+      ],
       );
       addTearDown(container.dispose);
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: MaterialApp(
-            theme: AppTheme.lightTheme,
-            home: const HomeScreen(),
-          ),
+          child: MaterialApp(theme: AppTheme.lightTheme, home: const HomeScreen()),
         ),
       );
       await tester.pumpAndSettle();
@@ -364,8 +356,7 @@ void main() {
       tester.view.padding = const FakeViewPadding(left: 60);
       addTearDown(tester.view.resetPadding);
       await tester.pumpAndSettle();
-      double left() =>
-          tester.getTopLeft(find.byType(SingleChildScrollView).last).dx;
+      double left() => tester.getTopLeft(find.byType(SingleChildScrollView).last).dx;
 
       await tapAndSettle(tester, find.text('home.new_board'));
       expect(left(), 60);
@@ -566,10 +557,7 @@ void main() {
       await openBoard(tester);
       await tapAndSettle(
         tester,
-        find.descendant(
-          of: find.byType(GridView),
-          matching: find.text('Center'),
-        ),
+        find.descendant(of: find.byType(GridView), matching: find.text('Center')),
       );
 
       await tester.enterText(sheetField(), '');
@@ -586,10 +574,7 @@ void main() {
       await openBoard(tester);
       await tapAndSettle(
         tester,
-        find.descendant(
-          of: find.byType(GridView),
-          matching: find.text('Center'),
-        ),
+        find.descendant(of: find.byType(GridView), matching: find.text('Center')),
       );
 
       await tester.enterText(sheetField(), 'Renamed');
@@ -605,9 +590,7 @@ void main() {
 
   group('공유', () {
     testWidgets('화면 전환 뒤 1080×1080 이미지를 만들고 공유 버튼이 켜진다', (tester) async {
-      final dir = await tester.runAsync(
-        () => Directory.systemTemp.createTemp('share'),
-      );
+      final dir = await tester.runAsync(() => Directory.systemTemp.createTemp('share'));
       addTearDown(() => dir!.deleteSync(recursive: true));
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         const MethodChannel('plugins.flutter.io/path_provider'),
@@ -626,8 +609,7 @@ void main() {
         await tester.runAsync(() async {
           await Future.delayed(const Duration(milliseconds: 20));
           final files = dir!.listSync().whereType<File>();
-          if (files.isNotEmpty && files.first.lengthSync() > 0)
-            image = files.first;
+          if (files.isNotEmpty && files.first.lengthSync() > 0) image = files.first;
         });
       }
       await tester.pump(const Duration(milliseconds: 100));
@@ -648,10 +630,7 @@ void main() {
       await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
 
       expect(find.bySemanticsLabel('settings.about'), findsOneWidget);
-      expect(
-        find.bySemanticsLabel(RegExp(r'^settings\.version')),
-        findsOneWidget,
-      );
+      expect(find.bySemanticsLabel(RegExp(r'^settings\.version')), findsOneWidget);
       semantics.dispose();
     });
 
@@ -673,10 +652,7 @@ void main() {
     testWidgets('목록과 상세가 2단으로 보이고 첫 보드가 열린다', (tester) async {
       await pumpApp(
         tester,
-        boards: [
-          _board(),
-          _board(id: 2, title: 'Second'),
-        ],
+        boards: [_board(), _board(id: 2, title: 'Second')],
         width: 1000,
       );
 

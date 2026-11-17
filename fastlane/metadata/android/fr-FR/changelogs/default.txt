@@ -1,7 +1,5 @@
-La première version de miniManda.
-• Organisez un objectif central et 8 sous-objectifs sur une grille 3x3
-• Ajoutez des notes et une checklist d'actions à chaque sous-objectif
-• La progression se calcule automatiquement quand vous cochez
-• Partagez votre grille sous forme d'image carrée
-• Thèmes clair et sombre, disponible en 6 langues
-Sans inscription. Vos grilles restent sur votre appareil.
+• Des publicités ont été ajoutées pour que miniManda reste gratuit.
+  - Une bannière s’affiche en bas des écrans d’accueil et de tableau
+  - Une publicité plein écran peut s’afficher après la création d’un tableau
+• Seules des publicités non personnalisées sont affichées
+• Vos tableaux et notes restent stockés uniquement sur votre appareil.

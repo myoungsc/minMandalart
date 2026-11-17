@@ -1,7 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../core/ads/ads.dart';
 import '../core/providers/goal_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/mm_widgets.dart';
@@ -20,15 +22,25 @@ class _NewBoardScreenState extends ConsumerState<NewBoardScreen> {
   final _description = TextEditingController();
   bool _showError = false;
   bool _saving = false;
+  InterstitialAd? _interstitial;
 
   @override
   void initState() {
     super.initState();
     _title.addListener(() => setState(() => _showError = false));
+    // 입력하는 동안 미리 받아 두고, 만들기가 끝나면 보여 준다.
+    loadInterstitial(ref, AdUnit.createInterstitial).then((ad) {
+      if (mounted) {
+        _interstitial = ad;
+      } else {
+        ad?.dispose();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _interstitial?.dispose();
     _title.dispose();
     _description.dispose();
     super.dispose();
@@ -62,6 +74,10 @@ class _NewBoardScreenState extends ConsumerState<NewBoardScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const BoardScreen()),
       );
+      // 새 보드 위에 띄운다. 닫으면 바로 만든 보드가 보인다.
+      final ad = _interstitial;
+      _interstitial = null;
+      ad?.show();
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
