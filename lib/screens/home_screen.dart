@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/ads/ad_banner.dart';
 import '../core/providers/goal_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/mm_widgets.dart';
@@ -30,37 +31,40 @@ class HomeScreen extends StatelessWidget {
     final c = context.mm;
     return NavigatorPopHandler(
       onPopWithResult: (_) => detailNavigatorKey.currentState?.maybePop(),
-      child: Row(
-        children: [
-          if (twoPane)
-            Container(
-              width: _listPaneWidth + 2 + MediaQuery.paddingOf(context).left,
-              decoration: BoxDecoration(
-                color: c.bg,
-                border: Border(right: BorderSide(color: c.line, width: 2)),
+      // 배너는 창 맨 아래 한 곳에만 둔다. 시트와 다이얼로그는 그 위를 덮는다.
+      child: AdBannerFrame(
+        child: Row(
+          children: [
+            if (twoPane)
+              Container(
+                width: _listPaneWidth + 2 + MediaQuery.paddingOf(context).left,
+                decoration: BoxDecoration(
+                  color: c.bg,
+                  border: Border(right: BorderSide(color: c.line, width: 2)),
+                ),
+                child: const Material(
+                  type: MaterialType.transparency,
+                  child: SafeArea(right: false, child: _BoardListPane()),
+                ),
               ),
-              child: const Material(
-                type: MaterialType.transparency,
-                child: SafeArea(right: false, child: _BoardListPane()),
-              ),
-            ),
-          Expanded(
-            // 경계가 없으면 화면이 먼저 그려진 왼쪽 목록의 접근성 정보까지 차단한다.
-            child: Semantics(
-              container: true,
-              // 2단에서는 왼쪽 여백(카메라 영역 등)을 목록이 이미 처리한다.
-              child: MediaQuery.removePadding(
-                context: context,
-                removeLeft: twoPane,
-                child: Navigator(
-                  key: detailNavigatorKey,
-                  onGenerateRoute: (_) =>
-                      MaterialPageRoute(builder: (_) => const _DetailRoot()),
+            Expanded(
+              // 경계가 없으면 화면이 먼저 그려진 왼쪽 목록의 접근성 정보까지 차단한다.
+              child: Semantics(
+                container: true,
+                // 2단에서는 왼쪽 여백(카메라 영역 등)을 목록이 이미 처리한다.
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeLeft: twoPane,
+                  child: Navigator(
+                    key: detailNavigatorKey,
+                    onGenerateRoute: (_) =>
+                        MaterialPageRoute(builder: (_) => const _DetailRoot()),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -86,9 +90,9 @@ class _DetailRootState extends ConsumerState<_DetailRoot> {
     if (_wasTwoPane && !twoPane && current != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !Navigator.of(context).canPop()) {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const BoardScreen()),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const BoardScreen()));
         }
       });
     }
@@ -156,7 +160,11 @@ class _BoardListPane extends ConsumerWidget {
     );
   }
 
-  Future<void> _openBoard(BuildContext context, WidgetRef ref, MandalartBoard board) async {
+  Future<void> _openBoard(
+    BuildContext context,
+    WidgetRef ref,
+    MandalartBoard board,
+  ) async {
     final twoPane = isTwoPane(context);
     await ref.read(currentBoardProvider.notifier).loadBoard(board.id!);
     if (twoPane) {
@@ -227,7 +235,10 @@ class _BoardListPane extends ConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: c.ink,
                               borderRadius: BorderRadius.circular(10),
@@ -336,7 +347,10 @@ class _BoardCard extends ConsumerWidget {
                   offset: const Offset(10, 0),
                   child: IconButton(
                     tooltip: 'common.board_menu'.tr(),
-                    constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+                    constraints: const BoxConstraints.tightFor(
+                      width: 44,
+                      height: 44,
+                    ),
                     padding: EdgeInsets.zero,
                     iconSize: 22,
                     icon: const Icon(Icons.more_vert_rounded),
@@ -354,7 +368,10 @@ class _BoardCard extends ConsumerWidget {
               ),
               style: muted,
             ),
-            Text(DateFormat('yyyy.MM.dd').format(board.createdAt), style: muted),
+            Text(
+              DateFormat('yyyy.MM.dd').format(board.createdAt),
+              style: muted,
+            ),
           ],
         ),
       ),
@@ -451,14 +468,20 @@ class _NewBoardTile extends StatelessWidget {
                   Container(
                     width: 52,
                     height: 52,
-                    decoration: BoxDecoration(color: c.ink, shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: c.ink,
+                      shape: BoxShape.circle,
+                    ),
                     child: Icon(Icons.add_rounded, size: 28, color: c.bg),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'home.new_board'.tr(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ],
               ),
@@ -500,7 +523,11 @@ class _HomeEmpty extends StatelessWidget {
                           color: c.center,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Icon(Icons.flag_rounded, size: 28, color: c.centerLabel),
+                        child: Icon(
+                          Icons.flag_rounded,
+                          size: 28,
+                          color: c.centerLabel,
+                        ),
                       )
                     else
                       const DashedBox(),
@@ -512,7 +539,11 @@ class _HomeEmpty extends StatelessWidget {
           Text(
             'home.empty_title'.tr(),
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, height: 1.3),
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              height: 1.3,
+            ),
           ),
           const SizedBox(height: 14),
           ConstrainedBox(
@@ -560,7 +591,11 @@ class _HomeError extends StatelessWidget {
           Text(
             'home.error_title'.tr(),
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, height: 1.3),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              height: 1.3,
+            ),
           ),
           const SizedBox(height: 12),
           ConstrainedBox(
@@ -580,7 +615,10 @@ class _HomeError extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 48),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -589,7 +627,10 @@ class _HomeError extends StatelessWidget {
                     Flexible(
                       child: Text(
                         'home.retry'.tr(),
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],

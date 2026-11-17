@@ -19,6 +19,9 @@
 #   ~/.appstore/AuthKey_<ASC_KEY_ID>.p8   App Store Connect API 키
 #   ~/.appstore/play-service-account.json Play 서비스 계정 키
 # 다른 키를 쓰려면 fastlane/.env 에 값을 적는다. (.env.example 참고, 먼저 적용된다)
+# 배너 광고 단위 ID는 fastlane/.env 의 ADMOB_BANNER_ID_IOS, ADMOB_BANNER_ID_ANDROID 에 둔다.
+# 없으면 빌드 전에 멈춘다(테스트 광고가 출시 빌드에 들어가지 않게).
+# AdMob 앱 ID: iOS는 ios/Flutter/AdMob.xcconfig, Android는 ~/.appstore/miniManda-admob.properties
 
 require "dotenv"
 Dotenv.load(File.expand_path("~/.appstore/env")) # 이미 있는 값은 덮어쓰지 않는다
@@ -35,10 +38,17 @@ def require_env!(keys, file_keys)
   UI.user_error!("인증 정보 확인 필요(~/.appstore 또는 fastlane/.env): #{missing.join(', ')}") unless missing.empty?
 end
 
+def android_build_cmd
+  admob = File.expand_path("~/.appstore/miniManda-admob.properties")
+  UI.user_error!("AdMob 앱 ID 파일 없음: #{admob}") unless File.exist?(admob)
+  "cd #{ROOT} && flutter build appbundle --release --dart-define=ADMOB_BANNER_ID=#{ENV['ADMOB_BANNER_ID_ANDROID']}"
+end
+
 platform :ios do
   desc "빌드 → TestFlight 업로드"
   lane :beta do
-    require_env!(%w[ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH], %w[ASC_KEY_PATH])
+    require_env!(%w[ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH ADMOB_BANNER_ID_IOS], %w[ASC_KEY_PATH])
+    UI.user_error!("AdMob 앱 ID 파일 없음: ios/Flutter/AdMob.xcconfig") unless File.exist?(File.join(ROOT, "ios/Flutter/AdMob.xcconfig"))
     api_key = app_store_connect_api_key(
       key_id: ENV["ASC_KEY_ID"],
       issuer_id: ENV["ASC_ISSUER_ID"],
@@ -47,7 +57,7 @@ platform :ios do
 
     # 서명은 Xcode 에 로그인된 계정으로 한다.
     FileUtils.rm_rf(File.join(ROOT, "build/ios/ipa"))
-    sh("cd #{ROOT} && flutter build ipa --release")
+    sh("cd #{ROOT} && flutter build ipa --release --dart-define=ADMOB_BANNER_ID=#{ENV['ADMOB_BANNER_ID_IOS']}")
 
     upload_to_testflight(
       api_key: api_key,
@@ -101,14 +111,15 @@ end
 platform :android do
   desc "AAB만 빌드 (Play Console 첫 업로드용)"
   lane :build do
-    sh("cd #{ROOT} && flutter build appbundle --release")
+    require_env!(%w[ADMOB_BANNER_ID_ANDROID], [])
+    sh(android_build_cmd)
   end
 
   desc "빌드 → Play 내부 테스트 트랙 업로드"
   lane :internal do |options|
-    require_env!(%w[PLAY_JSON_KEY_PATH], %w[PLAY_JSON_KEY_PATH])
+    require_env!(%w[PLAY_JSON_KEY_PATH ADMOB_BANNER_ID_ANDROID], %w[PLAY_JSON_KEY_PATH])
 
-    sh("cd #{ROOT} && flutter build appbundle --release")
+    sh(android_build_cmd)
 
     upload_to_play_store(
       track: "internal",

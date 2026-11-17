@@ -20,8 +20,15 @@ const _android = {
 
 String _read(String path) => File(path).readAsStringSync().trim();
 
+// review_information 은 언어 폴더가 아니다(심사 메모).
+List<Directory> _langDirs(String root) => Directory(root)
+    .listSync()
+    .whereType<Directory>()
+    .where((d) => !d.path.endsWith('review_information'))
+    .toList();
+
 void _checkLimits(String root, Map<String, int> limits, int languages) {
-  final dirs = Directory(root).listSync().whereType<Directory>().toList();
+  final dirs = _langDirs(root);
   expect(dirs, hasLength(languages));
   for (final dir in dirs) {
     for (final e in limits.entries) {
@@ -35,10 +42,12 @@ void _checkLimits(String root, Map<String, int> limits, int languages) {
 void main() {
   test('App Store 소개 문구가 제한 안에 있다', () {
     _checkLimits('fastlane/metadata/ios', _ios, 6);
-    for (final dir in Directory('fastlane/metadata/ios').listSync().whereType<Directory>()) {
+    for (final dir in _langDirs('fastlane/metadata/ios')) {
       final bytes = utf8.encode(_read('${dir.path}/keywords.txt')).length;
       expect(bytes, lessThanOrEqualTo(100), reason: dir.path);
     }
+    final notes = _read('fastlane/metadata/ios/review_information/notes.txt');
+    expect(notes.runes.length, lessThanOrEqualTo(4000));
   });
 
   test('Play 소개 문구가 제한 안에 있다', () {

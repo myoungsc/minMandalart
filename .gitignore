@@ -50,3 +50,6 @@ app.*.map.json
 /fastlane/README.md
 /fastlane/test_output/
 *.p8
+
+# AdMob 앱 ID (저장소 제외)
+/ios/Flutter/AdMob.xcconfig
