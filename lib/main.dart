@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/settings_provider.dart';
+import 'core/widgets/mm_widgets.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
@@ -48,6 +49,7 @@ class MyApp extends ConsumerWidget {
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
+      builder: dismissKeyboardOnTap,
       home: const HomeScreen(),
     );
   }

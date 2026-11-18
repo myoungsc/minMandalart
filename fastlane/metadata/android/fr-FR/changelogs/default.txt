@@ -1,0 +1,5 @@
+• Des publicités ont été ajoutées pour que miniManda reste gratuit.
+  - Une bannière s’affiche en bas des écrans d’accueil et de tableau
+  - Une publicité plein écran peut s’afficher après la création d’un tableau
+• Seules des publicités non personnalisées sont affichées
+• Vos tableaux et notes restent stockés uniquement sur votre appareil.

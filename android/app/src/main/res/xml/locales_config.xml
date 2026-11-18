@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 13 이상의 앱별 언어 설정 목록. main.dart의 supportedLocales와 맞춘다. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="ko" />
+    <locale android:name="ja" />
+    <locale android:name="es" />
+    <locale android:name="ru" />
+    <locale android:name="fr" />
+</locale-config>

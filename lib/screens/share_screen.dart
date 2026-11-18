@@ -117,64 +117,67 @@ class _ShareScreenState extends State<ShareScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        child: Column(
-          children: [
-            // 좁은 화면에서는 줄여 보여 주되, 이미지는 항상 같은 크기로 만든다.
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 6, bottom: 6),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    boxShadow: [BoxShadow(color: c.line, offset: const Offset(6, 6))],
-                  ),
-                  child: SizedBox.square(
-                    dimension: _cardSize,
-                    child: Stack(
-                      children: [
-                        RepaintBoundary(
-                          key: _cardKey,
-                          child: ShareCard(board: widget.board),
-                        ),
-                        if (generating)
-                          Positioned.fill(
-                            child: ColoredBox(
-                              color: c.bg,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const CircularProgressIndicator(),
-                                  const SizedBox(height: 14),
-                                  Text(
-                                    'share.generating'.tr(),
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: c.muted,
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Column(
+            children: [
+              // 좁은 화면에서는 줄여 보여 주되, 이미지는 항상 같은 크기로 만든다.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 6, bottom: 6),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      boxShadow: [BoxShadow(color: c.line, offset: const Offset(6, 6))],
+                    ),
+                    child: SizedBox.square(
+                      dimension: _cardSize,
+                      child: Stack(
+                        children: [
+                          RepaintBoundary(
+                            key: _cardKey,
+                            child: ShareCard(board: widget.board),
+                          ),
+                          if (generating)
+                            Positioned.fill(
+                              child: ColoredBox(
+                                color: c.bg,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const CircularProgressIndicator(),
+                                    const SizedBox(height: 14),
+                                    Text(
+                                      'share.generating'.tr(),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: c.muted,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 320),
-              child: Text(
-                'share.hint'.tr(),
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, height: 1.5, color: c.muted),
+              const SizedBox(height: 20),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 320),
+                child: Text(
+                  'share.hint'.tr(),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, height: 1.5, color: c.muted),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -255,10 +258,10 @@ class ShareCard extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'miniManda',
-                      style: TextStyle(
+                      'app.name'.tr(),
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,

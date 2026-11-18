@@ -13,6 +13,12 @@ val keystoreProps = Properties().apply {
     if (file.exists()) file.inputStream().use { load(it) }
 }
 
+// AdMob 앱 ID도 저장소 밖에 둔다. 없으면 Google 테스트 앱 ID.
+val admobProps = Properties().apply {
+    val file = File(System.getProperty("user.home"), ".appstore/miniManda-admob.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
 android {
     namespace = "co.kr.myoung.aos.miniMandalart"
     compileSdk = flutter.compileSdkVersion
@@ -36,6 +42,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["admobAppId"] =
+            admobProps.getProperty("admobAppId", "ca-app-pub-3940256099942544~3347511713")
     }
 
     signingConfigs {

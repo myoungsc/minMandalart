@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/ads/ads.dart';
 import '../core/providers/goal_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/mm_widgets.dart';
@@ -95,7 +96,10 @@ class _DetailRootState extends ConsumerState<_DetailRoot> {
     _wasTwoPane = twoPane;
 
     if (!twoPane) {
-      return const Scaffold(body: SafeArea(child: _BoardListPane()));
+      return const Scaffold(
+        body: SafeArea(child: _BoardListPane()),
+        bottomNavigationBar: AdBanner(unit: AdUnit.homeBanner),
+      );
     }
 
     if (current != null) return const BoardScreen();
@@ -111,24 +115,27 @@ class _DetailRootState extends ConsumerState<_DetailRoot> {
     }
     final c = context.mm;
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.grid_view_rounded, size: 36, color: c.muted),
-              const SizedBox(height: 10),
-              Text(
-                'home.pick_board'.tr(),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: c.muted,
+      bottomNavigationBar: const AdBanner(unit: AdUnit.homeBanner),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.grid_view_rounded, size: 36, color: c.muted),
+                const SizedBox(height: 10),
+                Text(
+                  'home.pick_board'.tr(),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: c.muted,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

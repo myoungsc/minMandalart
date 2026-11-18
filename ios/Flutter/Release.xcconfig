@@ -1,2 +1,5 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
+// AdMob 앱 ID. 실제 값은 AdMob.xcconfig(저장소 제외)에 두고, 없으면 Google 테스트 앱 ID를 쓴다.
+ADMOB_APP_ID = ca-app-pub-3940256099942544~1458002511
+#include? "AdMob.xcconfig"

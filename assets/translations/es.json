@@ -61,7 +61,7 @@
     "title_helper": "La casilla muestra hasta 3 líneas · {count}/40",
     "memo_label": "Nota (opcional)",
     "memo_hint": "Anota ideas o planes",
-    "locked": "Escribe un título para usar la marca de lista y la checklist",
+    "locked": "Escribe un título para marcarla como lista y usar la lista de acciones",
     "toggle_title": "Marcar esta casilla como lista",
     "toggle_subtitle": "Se marca a mano si no hay lista",
     "checklist": "Lista de acciones",

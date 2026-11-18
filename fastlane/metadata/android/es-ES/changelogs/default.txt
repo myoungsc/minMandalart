@@ -1,0 +1,5 @@
+• Hemos añadido anuncios para que miniManda siga siendo gratis.
+  - Aparece un anuncio de banner en la parte inferior de las pantallas de inicio y tablero
+  - Puede aparecer un anuncio a pantalla completa al crear un tablero nuevo
+• Solo se muestran anuncios no personalizados
+• Tus tableros y notas siguen guardándose solo en tu dispositivo.
