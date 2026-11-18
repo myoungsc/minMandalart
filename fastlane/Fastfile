@@ -5,6 +5,7 @@
 #   fastlane android internal validate_only:true   업로드 없이 Play 검증만
 #   fastlane ios metadata          소개 문구, 심사 메모, 연령 등급(app_rating_config.json)을 App Store Connect에 반영 (심사 제출 안 함)
 #   fastlane android metadata      소개 문구만 Play에 반영
+#   fastlane android changelogs    출시 노트만 Play에 반영 (기본 production 트랙, track:internal 처럼 바꿀 수 있음)
 #   fastlane ios screenshots       fastlane/screenshots/<locale>/ 를 App Store Connect에 반영 (덮어씀)
 #   fastlane android screenshots   metadata/android/<locale>/images/phoneScreenshots/ 를 Play에 반영
 #   fastlane android images        metadata/android/<locale>/images/ 의 icon.png, featureGraphic.png 를 Play에 반영
@@ -153,6 +154,25 @@ platform :android do
       skip_upload_aab: true,
       # 변경 내역은 빌드(version code)에 붙으므로 빌드 업로드 없이 올리면 실패한다.
       skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "출시 노트(changelogs/default.txt)만 Play에 반영. pubspec 버전 코드의 출시가 트랙에 먼저 있어야 한다"
+  lane :changelogs do |options|
+    require_env!(%w[PLAY_JSON_KEY_PATH], %w[PLAY_JSON_KEY_PATH])
+    version_code = File.read(File.join(ROOT, "pubspec.yaml"))[/^version:\s*\S+\+(\d+)/, 1]
+    UI.user_error!("pubspec.yaml 에서 버전 코드를 찾지 못함") unless version_code
+    upload_to_play_store(
+      json_key: File.expand_path(ENV["PLAY_JSON_KEY_PATH"]),
+      metadata_path: File.join(ROOT, "fastlane/metadata/android"),
+      track: options[:track] || "production",
+      version_code: version_code.to_i,
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: false,
       skip_upload_images: true,
       skip_upload_screenshots: true
     )
