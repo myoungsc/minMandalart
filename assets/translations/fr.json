@@ -45,7 +45,10 @@
     "delete_title": "Supprimer ce tableau ?",
     "delete_body": "Toutes les cases et listes de « {title} » seront supprimées. Cette action est irréversible.",
     "delete_cta": "Supprimer",
-    "deleted": "Tableau supprimé"
+    "deleted": "Tableau supprimé",
+    "days_left": "J-{days}",
+    "days_over": "Retard : {days} j",
+    "due_today": "Aujourd'hui"
   },
   "new": {
     "title": "Nouveau Mandalart",
@@ -74,7 +77,10 @@
     "clear_title": "Vider cette case ?",
     "clear_body": "Le titre, la note et la liste seront effacés.",
     "clear_cta": "Vider",
-    "cleared": "Case vidée"
+    "cleared": "Case vidée",
+    "due_date": "Échéance",
+    "due_none": "Aucune",
+    "due_clear": "Supprimer l'échéance"
   },
   "center": {
     "sheet_label": "Modifier l'objectif central",

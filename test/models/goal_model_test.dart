@@ -97,6 +97,36 @@ void main() {
       expect(updatedGoal.id, 1);
       expect(updatedGoal.description, '테스트 설명');
     });
+
+    test('마감일은 직렬화 왕복되고, 키가 없는 map도 읽힌다', () {
+      final goal = Goal(
+        title: '목표',
+        parentId: 1,
+        position: 0,
+        createdAt: DateTime(2026),
+        dueDate: DateTime(2026, 12, 25),
+      );
+      final map = goal.toMap();
+      expect(Goal.fromMap(map).dueDate, DateTime(2026, 12, 25));
+      expect(Goal.fromMap(map..remove('due_date')).dueDate, isNull);
+      expect(goal.copyWith(clearDueDate: true).dueDate, isNull);
+    });
+
+    test('daysLeft는 시간을 버리고 날짜만 비교한다', () {
+      Goal due(DateTime? date) => Goal(
+        title: '목표',
+        parentId: 1,
+        position: 0,
+        createdAt: DateTime(2026),
+        dueDate: date,
+      );
+      final now = DateTime(2026, 11, 19, 23, 30);
+      expect(due(null).daysLeft(now: now), isNull);
+      expect(due(DateTime(2026, 11, 19)).daysLeft(now: now), 0);
+      expect(due(DateTime(2026, 11, 20)).daysLeft(now: now), 1);
+      expect(due(DateTime(2026, 11, 18)).daysLeft(now: now), -1);
+      expect(due(DateTime(2027, 11, 19)).daysLeft(now: now), 365);
+    });
   });
 
   group('MandalartBoard 모델 테스트', () {
