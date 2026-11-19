@@ -81,7 +81,7 @@ Future<InterstitialAd?> loadInterstitial(WidgetRef ref, AdUnit unit) async {
   return done.future;
 }
 
-/// Scaffold.bottomNavigationBar 에 넣는 폭 맞춤 앵커 배너.
+/// Scaffold.bottomNavigationBar 에 넣는 배너. 폭은 화면에 맞추고 높이는 폰 50, 태블릿 75.
 /// [above]가 있으면 그 아래에 붙이고, 배너가 보일 때는 [above]의 하단 안전 영역을 배너가 맡는다.
 /// 광고가 없으면 자리를 차지하지 않는다.
 class AdBanner extends ConsumerStatefulWidget {
@@ -107,8 +107,9 @@ class _AdBannerState extends ConsumerState<AdBanner> {
       WidgetsBinding.instance.addPostFrameCallback((_) => old.dispose());
     }
 
-    final size = await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
-    if (size == null || !mounted || width != _width) return;
+    // 폭은 화면에 맞추고 높이만 고정한다. 폰 50, 태블릿(짧은 변 600 이상) 75.
+    final tablet = MediaQuery.sizeOf(context).shortestSide >= 600;
+    final size = AdSize(width: width, height: tablet ? 75 : 50);
     await BannerAd(
       adUnitId: widget.unit.id,
       request: _request,
