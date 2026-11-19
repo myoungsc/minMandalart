@@ -39,6 +39,7 @@ class Goal {
   final int progress;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final DateTime? dueDate;
   final List<ChecklistItem> checklistItems;
 
   Goal({
@@ -51,8 +52,20 @@ class Goal {
     this.progress = 0,
     required this.createdAt,
     this.updatedAt,
+    this.dueDate,
     this.checklistItems = const [],
   });
+
+  /// 마감일까지 남은 날 수(오늘 0, 지났으면 음수). 마감일이 없으면 null.
+  /// 서머타임으로 하루가 23시간인 날에도 맞도록 UTC 날짜끼리 뺀다.
+  int? daysLeft({DateTime? now}) {
+    final due = dueDate;
+    if (due == null) return null;
+    final today = now ?? DateTime.now();
+    return DateTime.utc(due.year, due.month, due.day)
+        .difference(DateTime.utc(today.year, today.month, today.day))
+        .inDays;
+  }
 
   GoalStatus get status {
     if (title.isEmpty) return GoalStatus.empty;
@@ -71,6 +84,7 @@ class Goal {
       'progress': progress,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
+      'due_date': dueDate?.toIso8601String(),
     };
   }
 
@@ -90,6 +104,10 @@ class Goal {
       updatedAt: map['updated_at'] != null
           ? DateTime.parse(map['updated_at'] as String)
           : null,
+      // 예전 백업 파일에는 이 키가 없다.
+      dueDate: map['due_date'] != null
+          ? DateTime.parse(map['due_date'] as String)
+          : null,
       checklistItems: checklistItems,
     );
   }
@@ -105,6 +123,8 @@ class Goal {
     int? progress,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? dueDate,
+    bool clearDueDate = false,
     List<ChecklistItem>? checklistItems,
   }) {
     return Goal(
@@ -117,6 +137,7 @@ class Goal {
       progress: progress ?? this.progress,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      dueDate: clearDueDate ? null : dueDate ?? this.dueDate,
       checklistItems: checklistItems ?? this.checklistItems,
     );
   }

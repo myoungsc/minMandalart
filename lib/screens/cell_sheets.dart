@@ -131,6 +131,26 @@ class _CellSheetState extends ConsumerState<_CellSheet> {
     await _guard(_notifier.setGoalCompleted(widget.goalId, goal.progress < 100));
   }
 
+  Future<void> _pickDueDate(Goal goal) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final last = DateTime(today.year + 5, today.month, today.day);
+    final current = goal.dueDate;
+    // 이미 정한 마감일이 범위 밖(지난 날짜)이어도 열리도록 범위를 넓힌다.
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current ?? today,
+      firstDate: current != null && current.isBefore(today) ? current : today,
+      lastDate: current != null && current.isAfter(last) ? current : last,
+    );
+    if (picked != null) await _setDueDate(picked);
+  }
+
+  Future<void> _setDueDate(DateTime? date) async {
+    await _flush();
+    await _guard(_notifier.setGoalDueDate(widget.goalId, date));
+  }
+
   Future<void> _addItem() async {
     final text = _newItem.text.trim();
     if (text.isEmpty) return;
@@ -227,6 +247,12 @@ class _CellSheetState extends ConsumerState<_CellSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    _DueDateRow(
+                      date: goal.dueDate,
+                      onTap: () => _pickDueDate(goal),
+                      onClear: () => _setDueDate(null),
+                    ),
+                    const SizedBox(height: 18),
                     if (items.isEmpty) ...[
                       _DoneToggle(
                         value: goal.progress >= 100,
@@ -402,6 +428,71 @@ class _CellSheetState extends ConsumerState<_CellSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DueDateRow extends StatelessWidget {
+  final DateTime? date;
+  final VoidCallback onTap;
+  final VoidCallback onClear;
+
+  const _DueDateRow({required this.date, required this.onTap, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mm;
+    final date = this.date;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 52),
+        padding: const EdgeInsets.only(left: 14, right: 4),
+        decoration: BoxDecoration(
+          border: Border.all(color: c.line, width: 2),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.event_rounded, size: 20, color: c.ink),
+            const SizedBox(width: 8),
+            Text(
+              'cell.due_date'.tr(),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                date == null
+                    ? 'cell.due_none'.tr()
+                    // 앱 언어를 따르는 yMMMd 형식
+                    : MaterialLocalizations.of(context).formatShortDate(date),
+                textAlign: TextAlign.end,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: date == null ? c.muted : c.ink,
+                ),
+              ),
+            ),
+            if (date == null)
+              const SizedBox(width: 10)
+            else
+              IconButton(
+                tooltip: 'cell.due_clear'.tr(),
+                constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+                padding: EdgeInsets.zero,
+                iconSize: 20,
+                color: c.muted,
+                icon: const Icon(Icons.close_rounded),
+                onPressed: onClear,
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -97,6 +97,9 @@ class CurrentBoardNotifier extends StateNotifier<MandalartBoard?> {
   Future<void> clearGoal(int goalId) =>
       _writeAndRefresh(() => _db.clearGoal(goalId));
 
+  Future<void> setGoalDueDate(int goalId, DateTime? date) =>
+      _writeAndRefresh(() => _db.setGoalDueDate(goalId, date));
+
   Future<void> setGoalCompleted(int goalId, bool isCompleted) =>
       _writeAndRefresh(() => _db.setGoalCompleted(goalId, isCompleted));
 

@@ -45,7 +45,10 @@
     "delete_title": "Delete this board?",
     "delete_body": "All cells and checklists in \"{title}\" will be deleted. This can't be undone.",
     "delete_cta": "Delete",
-    "deleted": "Board deleted"
+    "deleted": "Board deleted",
+    "days_left": "{days}d left",
+    "days_over": "{days}d late",
+    "due_today": "Due today"
   },
   "new": {
     "title": "New Mandalart",
@@ -74,7 +77,10 @@
     "clear_title": "Clear this cell?",
     "clear_body": "The title, memo, and checklist will all be erased.",
     "clear_cta": "Clear",
-    "cleared": "Cell cleared"
+    "cleared": "Cell cleared",
+    "due_date": "Due date",
+    "due_none": "Not set",
+    "due_clear": "Clear due date"
   },
   "center": {
     "sheet_label": "Edit core goal",

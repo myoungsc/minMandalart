@@ -329,7 +329,18 @@ class BoardCell extends StatelessWidget {
       ),
       _ => 'board.status_todo'.tr(),
     };
-    return '${goal.title}, $status';
+    final due = _dueLabel();
+    return due == null ? '${goal.title}, $status' : '${goal.title}, $status, $due';
+  }
+
+  /// 마감 문구. 마감일이 없거나 이미 완료한 칸은 null.
+  String? _dueLabel() {
+    final days = goal.daysLeft();
+    if (days == null || goal.status == GoalStatus.done) return null;
+    if (days == 0) return 'board.due_today'.tr();
+    return (days > 0 ? 'board.days_left' : 'board.days_over').tr(
+      namedArgs: {'days': '${days.abs()}'},
+    );
   }
 
   @override
@@ -424,6 +435,9 @@ class BoardCell extends StatelessWidget {
   }
 
   Widget _statusLine(MmColors c, GoalStatus status, Color foreground) {
+    // 칸이 작아 줄을 더하지 않고 상태 줄 안에 마감 문구를 넣는다.
+    final due = _dueLabel();
+    final overdue = (goal.daysLeft() ?? 0) < 0;
     return switch (status) {
       GoalStatus.inProgress => FittedBox(
         fit: BoxFit.scaleDown,
@@ -441,6 +455,17 @@ class BoardCell extends StatelessWidget {
                 height: 1,
               ),
             ),
+            if (due != null) ...[
+              const SizedBox(width: 6),
+              Text(
+                due,
+                style: TextStyle(
+                  color: overdue ? c.error : foreground,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -464,17 +489,24 @@ class BoardCell extends StatelessWidget {
       ),
       _ => Row(
         children: [
-          Icon(Icons.radio_button_unchecked_rounded, size: 16, color: c.muted),
+          Icon(
+            due == null ? Icons.radio_button_unchecked_rounded : Icons.event_rounded,
+            size: 16,
+            color: overdue ? c.error : c.muted,
+          ),
           const SizedBox(width: 3),
           Expanded(
-            child: Text(
-              'board.status_todo'.tr(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: c.muted,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                due ?? 'board.status_todo'.tr(),
+                maxLines: 1,
+                style: TextStyle(
+                  color: overdue ? c.error : c.muted,
+                  fontSize: 12,
+                  fontWeight: due == null ? FontWeight.w600 : FontWeight.w700,
+                ),
               ),
             ),
           ),
