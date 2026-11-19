@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,7 +32,15 @@ class _FakeReminder implements ReminderService {
   }
 
   @override
-  Future<void> schedule(TimeOfDay time, {required String title, required String body}) async {
+  Future<bool> hasPermission() async => grant;
+
+  @override
+  Future<void> schedule(
+    TimeOfDay time, {
+    required String title,
+    required String body,
+    required String channelName,
+  }) async {
     scheduled.add(time);
   }
 
@@ -726,6 +735,18 @@ void main() {
       await tapAndSettle(tester, find.text('OK'));
       expect(reminder.scheduled.last, const TimeOfDay(hour: 9, minute: 0));
       expect(reminder.scheduled, hasLength(2));
+    });
+
+    testWidgets('휴대폰이 아닌 플랫폼에서는 알림 설정을 보여 주지 않는다', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+      try {
+        await pumpApp(tester);
+        await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+        expect(find.text('settings.reminder_section'), findsNothing);
+        expect(find.text('settings.theme_section'), findsOneWidget);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
     });
   });
 

@@ -240,7 +240,7 @@ flutter pub get
   - `init()`은 **권한을 요청하지 않는다.** `DarwinInitializationSettings`의 `requestAlertPermission`, `requestSoundPermission`, `requestBadgePermission`은 기본값이 `true`라서 그대로 두면 iOS 첫 실행 때 권한 팝업이 뜬다. 셋 다 `false`로 명시하고, 권한은 `requestPermission()`에서만 요청한다.
 - `settings_provider.dart`: `AppSettings.reminderEnabled`(bool, 기본 false), `reminderTime`(TimeOfDay, 기본 21:00). SharedPreferences 키 `reminder_enabled`, `reminder_minutes`.
 - `settings_screen.dart`: 테마 그룹 아래 `settings.reminder_section` 그룹. 스위치 행과 시각 행(`showTimePicker`, 꺼져 있으면 비활성). 권한 요청은 스위치를 켤 때만. 거부되면 스위치를 되돌리고 `settings.reminder_denied` 스낵바.
-- 알림 문구는 예약하는 시점의 언어로 저장된다. 앱 시작 때 켜져 있으면 현재 언어로 다시 예약한다. 위치는 `main()`이 아니라 **`MaterialApp.builder` 안쪽**이다. `main()`에는 `ref`가 없고, `MyApp`(Localizations 바깥)의 첫 프레임은 번역 로드 전이라 `tr()`이 키 문자열을 돌려준다(에뮬레이터에서 알림 제목이 `reminder.title`로 온 것을 확인함). `builder`에서 작은 `ConsumerStatefulWidget`으로 감싸고 그 `initState`의 `addPostFrameCallback`에서 한 번만 켜져 있으면 `schedule(...)`을 호출한다. 첫 프레임을 막지 않게 기다리지 않는다.
+- 알림 문구는 예약하는 시점의 언어로 저장된다. 앱 시작 때 켜져 있으면 현재 언어로 다시 예약한다. 위치는 `main()`이 아니라 **`MaterialApp.builder` 안쪽**이다. `main()`에는 `ref`가 없고, `MyApp`(Localizations 바깥)의 첫 프레임은 번역 로드 전이라 `tr()`이 키 문자열을 돌려준다(에뮬레이터에서 알림 제목이 `reminder.title`로 온 것을 확인함). `builder`에서 작은 `ConsumerStatefulWidget`으로 감싸고, 처음 그릴 때·앱 언어가 바뀔 때·앱으로 돌아올 때(여행으로 시간대가 바뀌었거나 기기 설정에서 권한을 껐을 수 있다) 다시 예약한다. 권한이 꺼져 있으면 설정도 끈다. 기기 시간대는 예약할 때마다 다시 읽고, 내용이 같으면 다시 예약하지 않는다. 첫 프레임을 막지 않게 기다리지 않는다. 설정 변경과 예약은 riverpod `ReminderController`가 맡는다(예약 실패 시 설정을 끄고 남은 알림도 취소).
 - 마감 하루 전 알림은 넣지 않는다.
 - 번역 키: `settings.reminder_section`, `settings.reminder_enabled`, `settings.reminder_time`, `settings.reminder_denied`, `reminder.title`, `reminder.body`.
 

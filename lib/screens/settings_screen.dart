@@ -10,65 +10,11 @@ import 'about_mandalart_screen.dart';
 
 const _appVersion = '1.0.0';
 
-class SettingsScreen extends ConsumerStatefulWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  // 권한 팝업이나 예약이 끝나기 전에 다시 누르면 무시한다.
-  bool _busy = false;
-
-  Future<void> _setReminderEnabled(bool on) => _guard(() async {
-    final service = ref.read(reminderServiceProvider);
-    final notifier = ref.read(settingsProvider.notifier);
-    final current = ref.read(settingsProvider);
-    // 권한은 켤 때만 묻는다. 거부되면 스위치는 꺼진 채로 둔다.
-    if (on && !await service.requestPermission()) {
-      if (mounted) {
-        showMmSnack(ScaffoldMessenger.of(context), context, 'settings.reminder_denied'.tr());
-      }
-      return;
-    }
-    notifier.setReminderEnabled(on);
-    await syncReminder(service, current.copyWith(reminderEnabled: on));
-  });
-
-  Future<void> _pickReminderTime() => _guard(() async {
-    final service = ref.read(reminderServiceProvider);
-    final notifier = ref.read(settingsProvider.notifier);
-    final current = ref.read(settingsProvider);
-    final picked = await showTimePicker(context: context, initialTime: current.reminderTime);
-    if (picked == null) return;
-    notifier.setReminderTime(picked);
-    await syncReminder(service, current.copyWith(reminderTime: picked));
-  });
-
-  Future<void> _guard(Future<void> Function() body) async {
-    if (_busy) return;
-    final notifier = ref.read(settingsProvider.notifier);
-    setState(() => _busy = true);
-    try {
-      await body();
-    } catch (e) {
-      // 예약에 실패하면 켜진 것처럼 보이지 않게 끈다.
-      notifier.setReminderEnabled(false);
-      if (mounted) {
-        showMmSnack(
-          ScaffoldMessenger.of(context),
-          context,
-          'common.error'.tr(namedArgs: {'error': '$e'}),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mm;
     final settings = ref.watch(settingsProvider);
     final selected = settings.themeMode;
@@ -101,35 +47,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 24),
-            _SectionLabel('settings.reminder_section'.tr()),
-            _Group(
-              children: [
-                _Row(
-                  icon: Icons.notifications_rounded,
-                  label: 'settings.reminder_enabled'.tr(),
-                  toggled: settings.reminderEnabled,
-                  onTap: () => _setReminderEnabled(!settings.reminderEnabled),
-                  // 행 전체가 스위치 역할을 하므로 스위치 자체는 스크린리더에서 뺀다.
-                  trailing: ExcludeSemantics(
-                    child: Switch(
-                      value: settings.reminderEnabled,
-                      onChanged: _setReminderEnabled,
+            if (reminderSupported) ...[
+              const SizedBox(height: 24),
+              _SectionLabel('settings.reminder_section'.tr()),
+              _Group(
+                children: [
+                  _Row(
+                    icon: Icons.notifications_rounded,
+                    label: 'settings.reminder_enabled'.tr(),
+                    toggled: settings.reminderEnabled,
+                    onTap: () => _setReminderEnabled(context, ref, !settings.reminderEnabled),
+                    // 행 전체가 스위치 역할을 하므로 스위치 자체는 스크린리더에서 뺀다.
+                    trailing: ExcludeSemantics(
+                      child: Switch(
+                        value: settings.reminderEnabled,
+                        onChanged: (on) => _setReminderEnabled(context, ref, on),
+                      ),
                     ),
                   ),
-                ),
-                _Row(
-                  icon: Icons.schedule_rounded,
-                  label: 'settings.reminder_time'.tr(),
-                  enabled: settings.reminderEnabled,
-                  onTap: _pickReminderTime,
-                  trailing: Text(
-                    settings.reminderTime.format(context),
-                    style: TextStyle(fontSize: 15, color: c.muted),
+                  _Row(
+                    icon: Icons.schedule_rounded,
+                    label: 'settings.reminder_time'.tr(),
+                    enabled: settings.reminderEnabled,
+                    onTap: () => _pickReminderTime(context, ref),
+                    trailing: Text(
+                      settings.reminderTime.format(context),
+                      style: TextStyle(fontSize: 15, color: c.muted),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
             const SizedBox(height: 24),
             _SectionLabel('settings.info_section'.tr()),
             _Group(
@@ -156,6 +104,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
     );
+  }
+}
+
+Future<void> _setReminderEnabled(BuildContext context, WidgetRef ref, bool on) =>
+    _report(context, ref.read(reminderControllerProvider.notifier).setEnabled(on));
+
+Future<void> _pickReminderTime(BuildContext context, WidgetRef ref) async {
+  final controller = ref.read(reminderControllerProvider.notifier);
+  final picked = await showTimePicker(
+    context: context,
+    initialTime: ref.read(settingsProvider).reminderTime,
+  );
+  if (picked == null || !context.mounted) return;
+  await _report(context, controller.setTime(picked));
+}
+
+/// 알림 처리 결과에 맞는 안내를 띄운다.
+Future<void> _report(BuildContext context, Future<ReminderOutcome> action) async {
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    if (await action == ReminderOutcome.denied && context.mounted) {
+      showMmSnack(messenger, context, 'settings.reminder_denied'.tr());
+    }
+  } catch (e) {
+    if (context.mounted) {
+      showMmSnack(messenger, context, 'common.error'.tr(namedArgs: {'error': '$e'}));
+    }
   }
 }
 
