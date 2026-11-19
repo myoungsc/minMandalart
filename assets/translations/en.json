@@ -95,7 +95,11 @@
     "theme_system": "Follow system",
     "info_section": "About",
     "about": "About Mandalart",
-    "version": "App version"
+    "version": "App version",
+    "reminder_section": "Reminder",
+    "reminder_enabled": "Daily reminder",
+    "reminder_time": "Reminder time",
+    "reminder_denied": "Notifications are turned off. Allow them in your device settings."
   },
   "about": {
     "title": "About Mandalart",
@@ -107,5 +111,9 @@
     "step2": "Write the key elements in the 8 surrounding cells",
     "step3": "Write specific actions for each element",
     "step4": "Track your progress and reach your goal"
+  },
+  "reminder": {
+    "title": "Check today's goals",
+    "body": "Take a minute to look at your board and tick off what you did."
   }
 }
