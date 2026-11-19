@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/notifications/reminder_service.dart';
 import '../core/providers/settings_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/mm_widgets.dart';
@@ -9,13 +10,68 @@ import 'about_mandalart_screen.dart';
 
 const _appVersion = '1.0.0';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  // 권한 팝업이나 예약이 끝나기 전에 다시 누르면 무시한다.
+  bool _busy = false;
+
+  Future<void> _setReminderEnabled(bool on) => _guard(() async {
+    final service = ref.read(reminderServiceProvider);
+    final notifier = ref.read(settingsProvider.notifier);
+    final current = ref.read(settingsProvider);
+    // 권한은 켤 때만 묻는다. 거부되면 스위치는 꺼진 채로 둔다.
+    if (on && !await service.requestPermission()) {
+      if (mounted) {
+        showMmSnack(ScaffoldMessenger.of(context), context, 'settings.reminder_denied'.tr());
+      }
+      return;
+    }
+    notifier.setReminderEnabled(on);
+    await syncReminder(service, current.copyWith(reminderEnabled: on));
+  });
+
+  Future<void> _pickReminderTime() => _guard(() async {
+    final service = ref.read(reminderServiceProvider);
+    final notifier = ref.read(settingsProvider.notifier);
+    final current = ref.read(settingsProvider);
+    final picked = await showTimePicker(context: context, initialTime: current.reminderTime);
+    if (picked == null) return;
+    notifier.setReminderTime(picked);
+    await syncReminder(service, current.copyWith(reminderTime: picked));
+  });
+
+  Future<void> _guard(Future<void> Function() body) async {
+    if (_busy) return;
+    final notifier = ref.read(settingsProvider.notifier);
+    setState(() => _busy = true);
+    try {
+      await body();
+    } catch (e) {
+      // 예약에 실패하면 켜진 것처럼 보이지 않게 끈다.
+      notifier.setReminderEnabled(false);
+      if (mounted) {
+        showMmSnack(
+          ScaffoldMessenger.of(context),
+          context,
+          'common.error'.tr(namedArgs: {'error': '$e'}),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final c = context.mm;
-    final selected = ref.watch(settingsProvider).themeMode;
+    final settings = ref.watch(settingsProvider);
+    final selected = settings.themeMode;
     final notifier = ref.read(settingsProvider.notifier);
     return Scaffold(
       appBar: AppBar(
@@ -43,6 +99,35 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () => notifier.setThemeMode(mode),
                     trailing: _Radio(selected: selected == mode),
                   ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _SectionLabel('settings.reminder_section'.tr()),
+            _Group(
+              children: [
+                _Row(
+                  icon: Icons.notifications_rounded,
+                  label: 'settings.reminder_enabled'.tr(),
+                  toggled: settings.reminderEnabled,
+                  onTap: () => _setReminderEnabled(!settings.reminderEnabled),
+                  // 행 전체가 스위치 역할을 하므로 스위치 자체는 스크린리더에서 뺀다.
+                  trailing: ExcludeSemantics(
+                    child: Switch(
+                      value: settings.reminderEnabled,
+                      onChanged: _setReminderEnabled,
+                    ),
+                  ),
+                ),
+                _Row(
+                  icon: Icons.schedule_rounded,
+                  label: 'settings.reminder_time'.tr(),
+                  enabled: settings.reminderEnabled,
+                  onTap: _pickReminderTime,
+                  trailing: Text(
+                    settings.reminderTime.format(context),
+                    style: TextStyle(fontSize: 15, color: c.muted),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -130,6 +215,8 @@ class _Row extends StatelessWidget {
   final String label;
   final Widget trailing;
   final bool? selected;
+  final bool? toggled;
+  final bool enabled;
   final VoidCallback? onTap;
 
   const _Row({
@@ -137,18 +224,22 @@ class _Row extends StatelessWidget {
     required this.label,
     required this.trailing,
     this.selected,
+    this.toggled,
+    this.enabled = true,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
+    final row = Semantics(
       // 행마다 별도 요소로 둔다. 합쳐지면 스크린리더가 행을 구분해 누를 수 없다.
       container: true,
       inMutuallyExclusiveGroup: selected != null,
       checked: selected,
+      toggled: toggled,
+      enabled: enabled ? null : false,
       child: InkWell(
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 56),
           child: Padding(
@@ -175,6 +266,7 @@ class _Row extends StatelessWidget {
         ),
       ),
     );
+    return enabled ? row : Opacity(opacity: 0.4, child: row);
   }
 }
 
