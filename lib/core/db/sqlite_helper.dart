@@ -296,9 +296,7 @@ class SQLiteHelper {
     await db.update(
       'goals',
       {
-        'due_date': date == null
-            ? null
-            : DateTime(date.year, date.month, date.day).toIso8601String(),
+        'due_date': date == null ? null : dateOnly(date).toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       },
       where: 'id = ?',

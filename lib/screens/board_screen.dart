@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/ads/ads.dart';
 import '../core/providers/goal_provider.dart';
+import '../core/providers/today_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/mm_widgets.dart';
 import '../models/goal_model.dart';
@@ -316,12 +317,12 @@ class _CenterCell extends StatelessWidget {
   }
 }
 
-class BoardCell extends StatelessWidget {
+class BoardCell extends ConsumerWidget {
   final Goal goal;
 
   const BoardCell({super.key, required this.goal});
 
-  String _semanticLabel() {
+  String _semanticLabel(String? due) {
     final status = switch (goal.status) {
       GoalStatus.done => 'board.status_done'.tr(),
       GoalStatus.inProgress => 'board.status_in_progress'.tr(
@@ -329,14 +330,12 @@ class BoardCell extends StatelessWidget {
       ),
       _ => 'board.status_todo'.tr(),
     };
-    final due = _dueLabel();
     return due == null ? '${goal.title}, $status' : '${goal.title}, $status, $due';
   }
 
-  /// 마감 문구. 마감일이 없거나 이미 완료한 칸은 null.
-  String? _dueLabel() {
-    final days = goal.daysLeft();
-    if (days == null || goal.status == GoalStatus.done) return null;
+  /// 마감 문구. 남은 일수가 없으면(마감일 없음, 완료한 칸) null.
+  String? _dueLabel(int? days) {
+    if (days == null) return null;
     if (days == 0) return 'board.due_today'.tr();
     return (days > 0 ? 'board.days_left' : 'board.days_over').tr(
       namedArgs: {'days': '${days.abs()}'},
@@ -344,9 +343,13 @@ class BoardCell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mm;
     final status = goal.status;
+    // 날짜가 바뀌면 다시 그려지도록 오늘을 provider에서 읽고, 남은 일수는 한 번만 계산한다.
+    final today = ref.watch(todayProvider);
+    final days = status == GoalStatus.done ? null : goal.daysLeft(now: today);
+    final due = _dueLabel(days);
 
     if (status == GoalStatus.empty) {
       return _CellPress(
@@ -380,7 +383,7 @@ class BoardCell extends StatelessWidget {
     final done = status == GoalStatus.done;
     final foreground = done ? MmColors.onAccent : c.ink;
     return _CellPress(
-      semanticLabel: _semanticLabel(),
+      semanticLabel: _semanticLabel(due),
       onTap: () => showCellSheet(context, goal.id!),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(6),
@@ -422,7 +425,7 @@ class BoardCell extends StatelessWidget {
                           ),
                         ),
                       ),
-                      _statusLine(c, status, foreground),
+                      _statusLine(c, status, foreground, due, (days ?? 0) < 0),
                     ],
                   ),
                 ),
@@ -434,10 +437,14 @@ class BoardCell extends StatelessWidget {
     );
   }
 
-  Widget _statusLine(MmColors c, GoalStatus status, Color foreground) {
-    // 칸이 작아 줄을 더하지 않고 상태 줄 안에 마감 문구를 넣는다.
-    final due = _dueLabel();
-    final overdue = (goal.daysLeft() ?? 0) < 0;
+  /// 칸이 작아 줄을 더하지 않고 상태 줄 안에 마감 문구([due])를 넣는다.
+  Widget _statusLine(
+    MmColors c,
+    GoalStatus status,
+    Color foreground,
+    String? due,
+    bool overdue,
+  ) {
     return switch (status) {
       GoalStatus.inProgress => FittedBox(
         fit: BoxFit.scaleDown,
@@ -463,6 +470,7 @@ class BoardCell extends StatelessWidget {
                   color: overdue ? c.error : foreground,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
+                  height: 1,
                 ),
               ),
             ],
@@ -496,17 +504,14 @@ class BoardCell extends StatelessWidget {
           ),
           const SizedBox(width: 3),
           Expanded(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: AlignmentDirectional.centerStart,
-              child: Text(
-                due ?? 'board.status_todo'.tr(),
-                maxLines: 1,
-                style: TextStyle(
-                  color: overdue ? c.error : c.muted,
-                  fontSize: 12,
-                  fontWeight: due == null ? FontWeight.w600 : FontWeight.w700,
-                ),
+            child: Text(
+              due ?? 'board.status_todo'.tr(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: overdue ? c.error : c.muted,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),

@@ -110,6 +110,14 @@ void main() {
       expect(Goal.fromMap(map).dueDate, DateTime(2026, 12, 25));
       expect(Goal.fromMap(map..remove('due_date')).dueDate, isNull);
       expect(goal.copyWith(clearDueDate: true).dueDate, isNull);
+
+      // 시간이나 UTC 표기가 섞여 들어와도 로컬 날짜만 남는다.
+      final utc = DateTime.utc(2026, 12, 24, 15);
+      final local = utc.toLocal();
+      expect(
+        Goal.fromMap(map..['due_date'] = utc.toIso8601String()).dueDate,
+        DateTime(local.year, local.month, local.day),
+      );
     });
 
     test('daysLeft는 시간을 버리고 날짜만 비교한다', () {

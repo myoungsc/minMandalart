@@ -1,5 +1,11 @@
 enum GoalStatus { empty, todo, inProgress, done }
 
+/// 로컬 기준 날짜만 남긴다. 마감일은 저장할 때도 읽을 때도 이 함수를 거친다.
+DateTime dateOnly(DateTime value) {
+  final local = value.toLocal();
+  return DateTime(local.year, local.month, local.day);
+}
+
 class ChecklistItem {
   final int? id;
   final int goalId;
@@ -52,16 +58,16 @@ class Goal {
     this.progress = 0,
     required this.createdAt,
     this.updatedAt,
-    this.dueDate,
+    DateTime? dueDate,
     this.checklistItems = const [],
-  });
+  }) : dueDate = dueDate == null ? null : dateOnly(dueDate);
 
   /// 마감일까지 남은 날 수(오늘 0, 지났으면 음수). 마감일이 없으면 null.
   /// 서머타임으로 하루가 23시간인 날에도 맞도록 UTC 날짜끼리 뺀다.
   int? daysLeft({DateTime? now}) {
     final due = dueDate;
     if (due == null) return null;
-    final today = now ?? DateTime.now();
+    final today = dateOnly(now ?? DateTime.now());
     return DateTime.utc(due.year, due.month, due.day)
         .difference(DateTime.utc(today.year, today.month, today.day))
         .inDays;

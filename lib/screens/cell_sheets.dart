@@ -132,8 +132,10 @@ class _CellSheetState extends ConsumerState<_CellSheet> {
   }
 
   Future<void> _pickDueDate(Goal goal) async {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    // 다른 동작처럼 입력 중인 제목을 먼저 저장한다.
+    await _flush();
+    if (!mounted) return;
+    final today = DateUtils.dateOnly(DateTime.now());
     final last = DateTime(today.year + 5, today.month, today.day);
     final current = goal.dueDate;
     // 이미 정한 마감일이 범위 밖(지난 날짜)이어도 열리도록 범위를 넓힌다.
@@ -143,12 +145,14 @@ class _CellSheetState extends ConsumerState<_CellSheet> {
       firstDate: current != null && current.isBefore(today) ? current : today,
       lastDate: current != null && current.isAfter(last) ? current : last,
     );
-    if (picked != null) await _setDueDate(picked);
+    // 선택 창이 떠 있는 동안 시트가 닫혔으면 저장하지 않는다.
+    if (picked == null || !mounted) return;
+    await _guard(_notifier.setGoalDueDate(widget.goalId, picked));
   }
 
-  Future<void> _setDueDate(DateTime? date) async {
+  Future<void> _clearDueDate() async {
     await _flush();
-    await _guard(_notifier.setGoalDueDate(widget.goalId, date));
+    await _guard(_notifier.setGoalDueDate(widget.goalId, null));
   }
 
   Future<void> _addItem() async {
@@ -250,7 +254,7 @@ class _CellSheetState extends ConsumerState<_CellSheet> {
                     _DueDateRow(
                       date: goal.dueDate,
                       onTap: () => _pickDueDate(goal),
-                      onClear: () => _setDueDate(null),
+                      onClear: _clearDueDate,
                     ),
                     const SizedBox(height: 18),
                     if (items.isEmpty) ...[

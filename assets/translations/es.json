@@ -47,7 +47,7 @@
     "delete_cta": "Eliminar",
     "deleted": "Tablero eliminado",
     "days_left": "Faltan {days} d",
-    "days_over": "{days} d de retraso",
+    "days_over": "Retraso: {days} d",
     "due_today": "Vence hoy"
   },
   "new": {
