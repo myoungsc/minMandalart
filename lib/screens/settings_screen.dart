@@ -8,8 +8,6 @@ import '../core/widgets/mm_widgets.dart';
 import 'about_mandalart_screen.dart';
 import 'backup_screen.dart';
 
-const _appVersion = '1.0.0';
-
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -76,7 +74,8 @@ class SettingsScreen extends ConsumerWidget {
                   icon: Icons.info_rounded,
                   label: 'settings.version'.tr(),
                   trailing: Text(
-                    _appVersion,
+                    // 로딩 중이거나 읽지 못하면 비워 둔다.
+                    ref.watch(appVersionProvider).valueOrNull ?? '',
                     style: TextStyle(fontSize: 15, color: c.muted),
                   ),
                 ),

@@ -85,7 +85,9 @@
     "title": "共有",
     "generating": "画像を作成中…",
     "hint": "1:1の正方形画像で共有されます。画像の保存は共有画面からできます。",
-    "button": "共有する"
+    "button": "共有する",
+    "style_light": "ライト",
+    "style_dark": "ダーク"
   },
   "settings": {
     "title": "設定",

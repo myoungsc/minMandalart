@@ -14,6 +14,8 @@ import 'package:mandalart/models/goal_model.dart';
 import 'package:mandalart/screens/backup_screen.dart';
 import 'package:mandalart/screens/home_screen.dart';
 import 'package:mandalart/screens/settings_screen.dart';
+import 'package:mandalart/screens/share_screen.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 /// 메모리에서 SQLiteHelper와 같은 규칙으로 동작하는 가짜 DB.
 class _FakeDb implements SQLiteHelper {
@@ -614,30 +616,51 @@ void main() {
   });
 
   group('공유', () {
-    testWidgets('화면 전환 뒤 1080×1080 이미지를 만들고 공유 버튼이 켜진다', (tester) async {
-      final dir = await tester.runAsync(() => Directory.systemTemp.createTemp('share'));
-      addTearDown(() => dir!.deleteSync(recursive: true));
+    /// 이미지가 저장될 임시 폴더를 만들고 path_provider가 그 경로를 돌려주게 한다.
+    Future<Directory> mockTempDir(WidgetTester tester) async {
+      final dir = (await tester.runAsync(() => Directory.systemTemp.createTemp('share')))!;
+      addTearDown(() => dir.deleteSync(recursive: true));
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         const MethodChannel('plugins.flutter.io/path_provider'),
-        (_) async => dir!.path,
+        (_) async => dir.path,
       );
+      return dir;
+    }
 
-      await pumpApp(tester, boards: [_board()]);
-      await openBoard(tester);
-      await tester.tap(find.text('board.share'));
-
-      // 앱 쪽은 가상 시간, 이미지 생성은 실제 시간이 필요해 번갈아 진행한다.
-      // 전환 첫 프레임에 캡처하면 그려지지 않은 화면이라 실패한다.
+    /// 앱 쪽은 가상 시간, 이미지 생성은 실제 시간이 필요해 번갈아 진행한다.
+    /// 전환 첫 프레임에 캡처하면 그려지지 않은 화면이라 실패한다.
+    /// 파일이 생기고 공유 버튼이 켜질 때(화면이 생성 완료를 알았을 때)까지 기다린다.
+    Future<File?> waitForImage(WidgetTester tester, Directory dir) async {
       File? image;
-      for (int i = 0; i < 100 && image == null; i++) {
+      bool ready() =>
+          image != null &&
+          tester
+                  .widget<PrimaryButton>(
+                    find.descendant(of: find.byType(ShareScreen), matching: find.byType(PrimaryButton)),
+                  )
+                  .onTap !=
+              null;
+      for (int i = 0; i < 100 && !ready(); i++) {
         await tester.pump(const Duration(milliseconds: 50));
         await tester.runAsync(() async {
           await Future.delayed(const Duration(milliseconds: 20));
-          final files = dir!.listSync().whereType<File>();
+          final files = dir.listSync().whereType<File>();
           if (files.isNotEmpty && files.first.lengthSync() > 0) image = files.first;
         });
       }
       await tester.pump(const Duration(milliseconds: 100));
+      return image;
+    }
+
+    ShareCard shareCard(WidgetTester tester) => tester.widget<ShareCard>(find.byType(ShareCard));
+
+    testWidgets('화면 전환 뒤 1080×1080 이미지를 만들고 공유 버튼이 켜진다', (tester) async {
+      final dir = await mockTempDir(tester);
+
+      await pumpApp(tester, boards: [_board()]);
+      await openBoard(tester);
+      await tester.tap(find.text('board.share'));
+      final image = await waitForImage(tester, dir);
 
       expect(find.textContaining('common.error'), findsNothing);
       expect(image, isNotNull, reason: '이미지 파일이 만들어져야 한다');
@@ -645,6 +668,49 @@ void main() {
       final data = ByteData.sublistView(bytes!);
       expect(data.getUint32(16), 1080, reason: 'PNG 폭');
       expect(data.getUint32(20), 1080, reason: 'PNG 높이');
+      // 라이트 테마에서는 밝은 이미지가 기본이다.
+      expect(shareCard(tester).colors, MmColors.light);
+    });
+
+    testWidgets('어둡게를 고르면 어두운 팔레트로 다시 만든다', (tester) async {
+      final dir = await mockTempDir(tester);
+
+      await pumpApp(tester, boards: [_board()]);
+      await openBoard(tester);
+      await tester.tap(find.text('board.share'));
+      expect(await waitForImage(tester, dir), isNotNull);
+
+      // 이전 파일이 남아 있으면 다시 그려지기 전에 대기가 끝나므로 지워 두고 새 파일을 기다린다.
+      await tester.runAsync(() async {
+        for (final f in dir.listSync()) {
+          f.deleteSync();
+        }
+      });
+      await tester.tap(find.text('share.style_dark'));
+      expect(await waitForImage(tester, dir), isNotNull);
+
+      expect(find.textContaining('common.error'), findsNothing);
+      expect(shareCard(tester).colors, MmColors.dark);
+      final background = tester.widget<Container>(
+        find.descendant(of: find.byType(ShareCard), matching: find.byType(Container)).first,
+      );
+      expect((background.decoration! as BoxDecoration).color, MmColors.dark.bg);
+      // 진행 중 칸 글자는 어두운 배경에서도 보이게 ink 색이어야 한다.
+      final cellTitle = tester.widget<Text>(
+        find.descendant(of: find.byType(ShareCard), matching: find.text('Old')),
+      );
+      expect(cellTitle.style!.color, MmColors.dark.ink);
+    });
+
+    testWidgets('다크 테마에서는 어두운 이미지가 기본이다', (tester) async {
+      final dir = await mockTempDir(tester);
+
+      await pumpApp(tester, boards: [_board()], theme: ThemeMode.dark);
+      await openBoard(tester);
+      await tester.tap(find.text('board.share'));
+      expect(await waitForImage(tester, dir), isNotNull);
+
+      expect(shareCard(tester).colors, MmColors.dark);
     });
   });
 
@@ -657,6 +723,20 @@ void main() {
       expect(find.bySemanticsLabel('settings.about'), findsOneWidget);
       expect(find.bySemanticsLabel(RegExp(r'^settings\.version')), findsOneWidget);
       semantics.dispose();
+    });
+
+    testWidgets('앱 버전을 패키지 정보에서 읽어 보여 준다', (tester) async {
+      PackageInfo.setMockInitialValues(
+        appName: 'miniManda',
+        packageName: 'test',
+        version: '1.2.3',
+        buildNumber: '9',
+        buildSignature: '',
+      );
+      await pumpApp(tester);
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+
+      expect(find.text('1.2.3 (9)'), findsOneWidget);
     });
 
     testWidgets('테마를 고르면 바로 적용된다', (tester) async {
