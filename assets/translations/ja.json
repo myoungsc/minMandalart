@@ -95,7 +95,9 @@
     "theme_system": "システム設定に従う",
     "info_section": "情報",
     "about": "マンダラートの紹介",
-    "version": "アプリバージョン"
+    "version": "アプリバージョン",
+    "data_section": "データ",
+    "backup": "バックアップと復元"
   },
   "about": {
     "title": "マンダラートの紹介",
@@ -107,5 +109,21 @@
     "step2": "周りの8マスに重要な要素を書きます",
     "step3": "要素ごとに具体的な実行方法を書きます",
     "step4": "進捗をチェックしながら目標を達成します"
+  },
+  "backup": {
+    "title": "バックアップと復元",
+    "export": "書き出し",
+    "export_hint": "チェックリストを含むすべてのボードを1つのファイルに保存します。iCloud DriveやGoogle Driveなど安全な場所に保管してください。",
+    "save": "ファイルに保存",
+    "save_done": "バックアップファイルを保存しました",
+    "share": "共有",
+    "import": "読み込み",
+    "import_hint": "miniMandaのバックアップファイル(.json)を選んでボードを復元します。",
+    "import_merge": "今のボードに追加",
+    "import_replace": "今のボードを消して置き換え",
+    "import_confirm_title": "すべてのボードを置き換えますか?",
+    "replace_confirm_body": "今あるボードはすべて削除され、ファイル内の{count}個のボードに置き換わります。元に戻せません。",
+    "import_done": "{count}個のボードを読み込みました",
+    "invalid_file": "miniMandaのバックアップファイルではありません"
   }
 }
