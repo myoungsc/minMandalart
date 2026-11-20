@@ -95,7 +95,9 @@
     "theme_system": "Selon le système",
     "info_section": "Informations",
     "about": "À propos du Mandalart",
-    "version": "Version de l'app"
+    "version": "Version de l'app",
+    "data_section": "Données",
+    "backup": "Sauvegarde et restauration"
   },
   "about": {
     "title": "À propos du Mandalart",
@@ -107,5 +109,21 @@
     "step2": "Écrivez les éléments clés dans les 8 cases autour",
     "step3": "Écrivez des actions concrètes pour chaque élément",
     "step4": "Suivez vos progrès et atteignez votre objectif"
+  },
+  "backup": {
+    "title": "Sauvegarde et restauration",
+    "export": "Exporter",
+    "export_hint": "Enregistrez tous les tableaux, avec leurs listes, dans un seul fichier. Conservez-le en lieu sûr, comme iCloud Drive ou Google Drive.",
+    "save": "Enregistrer dans un fichier",
+    "save_done": "Fichier de sauvegarde enregistré",
+    "share": "Partager",
+    "import": "Importer",
+    "import_hint": "Choisissez un fichier de sauvegarde miniManda (.json) pour récupérer ses tableaux.",
+    "import_merge": "Ajouter à mes tableaux",
+    "import_replace": "Remplacer mes tableaux",
+    "import_confirm_title": "Remplacer tous les tableaux ?",
+    "replace_confirm_body": "Tous les tableaux actuels seront supprimés et remplacés par les tableaux du fichier ({count}). Action irréversible.",
+    "import_done": "Tableaux importés : {count}",
+    "invalid_file": "Ce n'est pas un fichier de sauvegarde miniManda valide"
   }
 }

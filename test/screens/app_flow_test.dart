@@ -10,6 +10,7 @@ import 'package:mandalart/core/providers/goal_provider.dart';
 import 'package:mandalart/core/theme/app_theme.dart';
 import 'package:mandalart/core/widgets/mm_widgets.dart';
 import 'package:mandalart/models/goal_model.dart';
+import 'package:mandalart/screens/backup_screen.dart';
 import 'package:mandalart/screens/home_screen.dart';
 import 'package:mandalart/screens/settings_screen.dart';
 
@@ -160,6 +161,29 @@ class _FakeDb implements SQLiteHelper {
     _replaceGoal(
       _syncProgress(goal, goal.checklistItems.where((i) => i.id != item.id).toList()),
     );
+  }
+
+  @override
+  Future<List<MandalartBoard>> readAllBoardsFull() async => [...boards];
+
+  @override
+  Future<List<int>> importBoards(List<MandalartBoard> boards, {required bool replace}) async {
+    if (replace) this.boards.clear();
+    final ids = <int>[];
+    for (final board in boards) {
+      final boardId = _nextId++;
+      ids.add(boardId);
+      this.boards.add(
+        board.copyWith(
+          id: boardId,
+          subGoals: [
+            for (final goal in board.subGoals)
+              goal.copyWith(id: _nextId++, parentId: boardId),
+          ],
+        ),
+      );
+    }
+    return ids;
   }
 
   @override
@@ -645,6 +669,83 @@ void main() {
 
       await tapAndSettle(tester, find.text('settings.about'));
       expect(find.text('about.heading'), findsOneWidget);
+    });
+
+    testWidgets('백업 화면에 들어가고, 보드가 없으면 내보내기가 꺼진다', (tester) async {
+      await pumpApp(tester);
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+      await tapAndSettle(tester, find.text('settings.backup'));
+
+      expect(find.byType(BackupScreen), findsOneWidget);
+      SettingsRow rowOf(String label) => tester.widget<SettingsRow>(
+            find.ancestor(of: find.text(label), matching: find.byType(SettingsRow)),
+          );
+      expect(rowOf('backup.save').onTap, isNull);
+      expect(rowOf('backup.share').onTap, isNull);
+      expect(rowOf('backup.import_merge').onTap, isNotNull);
+      expect(rowOf('backup.import_replace').onTap, isNotNull);
+    });
+
+    testWidgets('보드가 있으면 내보내기를 누를 수 있다', (tester) async {
+      await pumpApp(tester, boards: [_board()]);
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+      await tapAndSettle(tester, find.text('settings.backup'));
+
+      final save = tester.widget<SettingsRow>(
+        find.ancestor(of: find.text('backup.save'), matching: find.byType(SettingsRow)),
+      );
+      expect(save.onTap, isNotNull);
+    });
+  });
+
+  group('백업 provider', () {
+    late ProviderContainer container;
+
+    setUp(() {
+      db = _FakeDb()..boards.add(_board());
+      container = ProviderContainer(
+        overrides: [databaseProvider.overrideWithValue(db)],
+      );
+    });
+
+    tearDown(() => container.dispose());
+
+    Future<MandalartBoardsNotifier> loaded() async {
+      final notifier = container.read(mandalartBoardsProvider.notifier);
+      await notifier.loadBoards();
+      return notifier;
+    }
+
+    test('잘못된 JSON이면 FormatException을 그대로 던지고 목록 상태는 유지된다', () async {
+      final notifier = await loaded();
+
+      await expectLater(
+        notifier.importJson('{"app":"other"}', replace: true),
+        throwsFormatException,
+      );
+      final state = container.read(mandalartBoardsProvider);
+      expect(state.hasError, isFalse);
+      expect(state.value, hasLength(1));
+    });
+
+    test('내보낸 JSON을 추가로 불러오면 보드가 늘고, 교체하면 파일 내용만 남는다', () async {
+      final notifier = await loaded();
+      final json = await notifier.exportJson();
+
+      expect(await notifier.importJson(json, replace: false), 1);
+      expect(container.read(mandalartBoardsProvider).value, hasLength(2));
+
+      final current = container.read(currentBoardProvider.notifier);
+      await current.loadBoard(container.read(mandalartBoardsProvider).value!.first.id!);
+      expect(container.read(currentBoardProvider), isNotNull);
+
+      expect(await notifier.importJson(json, replace: true), 1);
+      // 열려 있던 보드는 지워졌으므로 비운다.
+      expect(container.read(currentBoardProvider), isNull);
+      final boards = container.read(mandalartBoardsProvider).value!;
+      expect(boards, hasLength(1));
+      expect(boards.single.centerGoal, 'Center');
+      expect(boards.single.subGoals.first.title, 'Old');
     });
   });
 

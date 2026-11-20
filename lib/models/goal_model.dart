@@ -17,6 +17,17 @@ class ChecklistItem {
     required this.createdAt,
   });
 
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'goal_id': goalId,
+      'title': title,
+      'is_done': isDone ? 1 : 0,
+      'position': position,
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
+
   factory ChecklistItem.fromMap(Map<String, dynamic> map) {
     return ChecklistItem(
       id: map['id'] as int?,

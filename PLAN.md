@@ -84,7 +84,7 @@ flutter pub get
 **테스트**
 - 위젯 테스트의 `ProviderContainer`에는 `adsEnabledProvider.overrideWithValue(false)`가 있어야 한다 (`test/screens/app_flow_test.dart`의 `pumpApp` 참고).
 - `test/screens/app_flow_test.dart`의 `_FakeDb implements SQLiteHelper`는 `SQLiteHelper`에 메서드를 추가하면 같이 구현해야 컴파일된다.
-- DB 테스트는 `test/db/sqlite_helper_test.dart`의 기존 패턴(sqflite_common_ffi, 메모리 DB)을 따른다. DB 버전을 올리는 단계는 "이전 버전 → 새 버전 마이그레이션 후 기존 데이터 유지" 테스트를 반드시 넣는다.
+- DB 테스트는 `test/db/sqlite_helper_test.dart`의 기존 패턴(sqflite_common_ffi)을 따른다. 인스턴스 메서드는 싱글톤 `SQLiteHelper.instance`(ffi 파일 DB, 테스트끼리 공유), static 마이그레이션은 `inMemoryDatabasePath` 메모리 DB로 테스트한다. DB 버전을 올리는 단계는 "이전 버전 → 새 버전 마이그레이션 후 기존 데이터 유지" 테스트를 반드시 넣는다.
 - 각 단계 끝에 `flutter analyze` 이슈 0건, `flutter test` 전체 통과.
 
 **건드리지 않는 것**
@@ -145,27 +145,42 @@ flutter pub get
   - `String encodeBackup(List<MandalartBoard> boards, {DateTime? now})`
   - `List<MandalartBoard> decodeBackup(String json)`
   - 포맷: `{"app":"miniManda","format":1,"exportedAt":"<ISO8601>","boards":[{...MandalartBoard.toMap(),"goals":[{...Goal.toMap(),"checklist":[ChecklistItem.toMap()]}]}]}`
-  - 검증 (하나라도 어기면 `FormatException`): `app`이 `miniManda`, `format`이 1, `boards`가 리스트, 보드마다 `center_goal`이 비어 있지 않은 문자열, goal의 `position`이 0~7이고 중복 없음.
-  - 불러올 때 goals가 8개보다 적으면 빠진 position을 빈 goal(`title: ''`)로 채운다. id 값은 믿지 않는다(DB가 새로 발급).
+  - 검증 (하나라도 어기면 `FormatException`): `app`이 `miniManda`, `format`이 1, `boards`가 **비어 있지 않은** 리스트(빈 파일로 "교체"하면 기존 보드만 지워지므로 막는다), 보드마다 `center_goal`이 비어 있지 않은 문자열, goal의 `position`이 0~7이고 중복 없음.
+  - 타입이 틀린 값(예: `title`이 숫자, `goal_id` 없음)은 `fromMap`의 `as` 형변환에서 `TypeError`가 난다. `decodeBackup` 본문 전체를 `try`로 감싸 `TypeError`(그리고 `jsonDecode`의 오류)를 `FormatException`으로 바꿔 던진다. 그래야 화면에서 `backup.invalid_file`로 보인다.
+  - `progress`는 0~100으로 제한한다(`clamp`).
+  - goal의 `title`이 비어 있으면 빈 칸이다. 그 goal의 체크리스트는 버리고 `progress`는 0으로 맞춘다(앱의 `clearGoal`과 같은 상태).
+  - 불러올 때 goals가 8개보다 적으면 빠진 position을 빈 goal(`title: ''`, `createdAt`은 그 보드의 `createdAt`, `createBoardWithEmptyGoals`와 같은 방식)로 채운다. id 값은 믿지 않는다(DB가 새로 발급).
 - `lib/core/db/sqlite_helper.dart`:
   - `Future<List<MandalartBoard>> readAllBoardsFull()`: 모든 보드를 체크리스트까지 읽는다 (`readMandalartBoard`를 보드마다 호출해도 된다).
-  - `Future<List<int>> importBoards(List<MandalartBoard> boards, {required bool replace})`: 트랜잭션 하나. `replace`면 `mandalart_boards`를 전부 삭제(CASCADE로 나머지도 삭제). 보드 → goals → checklist_items 순으로 insert하되 `id`는 빼고, `parent_id`와 `goal_id`는 새로 발급된 id로 바꾼다. 새 보드 id 목록을 반환한다.
-- `lib/core/providers/goal_provider.dart`: `MandalartBoardsNotifier`에 `Future<String> exportJson()`, `Future<int> importJson(String json, {required bool replace})`(가져온 보드 수 반환, 끝나면 `loadBoards()`). `replace`로 불러왔으면 `currentBoardProvider`를 `clearBoard()` 한다.
+  - `Future<List<int>> importBoards(List<MandalartBoard> boards, {required bool replace})`: 트랜잭션 하나. `replace`면 `mandalart_boards`를 전부 삭제(CASCADE로 나머지도 삭제). 보드 → goals → checklist_items 순으로 insert하되 `id`는 빼고, `parent_id`와 `goal_id`는 새로 발급된 id로 바꾼다. 체크리스트가 있는 goal은 insert할 때 `progress`를 Dart에서 `완료 항목 수 * 100 ~/ 전체 항목 수`로 계산해 넣는다(파일의 `progress`와 체크리스트가 어긋나도 DB는 일관되게). 기존 `_syncGoalProgress`는 부르지 않는다. 이 함수는 `updated_at`을 현재 시각으로 덮어써서, 복원한 칸의 수정 시각이 전부 바뀐다(이 메서드를 다시 쓰는 2·7·9단계에도 영향). 체크리스트가 없는 goal은 파일의 `progress`를 그대로 쓴다. `created_at`과 `updated_at`은 파일 값을 그대로 넣는다. 새 보드 id 목록을 반환한다.
+- `lib/core/providers/goal_provider.dart`: `MandalartBoardsNotifier`에 `Future<String> exportJson()`, `Future<int> importJson(String json, {required bool replace})`(가져온 보드 수 반환, 끝나면 `loadBoards()`).
+  - 이 두 메서드는 기존 메서드(`createBoard` 등)처럼 오류를 잡아 `AsyncValue.error`로 바꾸지 **않는다**. 그러면 실패했을 때 홈 목록이 오류 화면으로 바뀌고 스낵바는 뜨지 않는다. 오류는 그대로 던져 화면이 처리한다.
+  - `MandalartBoardsNotifier`에는 `Ref`가 없으므로 `clearBoard()`는 여기서 하지 않는다. 교체로 불러온 직후 `BackupScreen`에서 `ref.read(currentBoardProvider.notifier).clearBoard()`를 호출한다.
 - 새 파일 `lib/screens/backup_screen.dart` (AppBar + `BackIcon`, 광고 없음):
-  - **내보내기:** `path_provider` 임시 폴더에 `minimanda_backup_YYYYMMDD.json`을 쓰고 `share_plus`로 파일 공유. iPad 위치 지정(`sharePositionOrigin`)은 `share_screen.dart`의 `_share()` 방식을 그대로 따른다. 보드가 0개면 버튼 비활성.
-  - **불러오기:** `file_picker`로 `.json` 하나 선택 → 5MB 넘으면 `backup.invalid_file` → `decodeBackup` → 확인 다이얼로그(보드 수 표시, "기존 보드에 추가" / "기존 보드를 지우고 교체" / 취소) → import → `backup.import_done` 스낵바.
-  - `FormatException`은 `backup.invalid_file`, 그 밖의 실패는 `common.error` 스낵바.
+  - **내보내기:** 버튼 두 개. 파일 이름은 둘 다 `minimanda_backup_YYYYMMDD.json`. 보드가 0개면 둘 다 비활성.
+    - `backup.save`("파일로 저장"): `file_picker`의 저장 창으로 사용자가 고른 위치에 저장한다. Android 공유 시트에는 기기에 따라 "기기에 저장" 항목이 없어서 필요하다. 사용자가 창을 닫으면(결과 `null`) 아무것도 하지 않는다. 저장되면 `backup.save_done` 스낵바.
+    - `backup.share`("공유"): `path_provider` 임시 폴더에 파일을 쓰고 `share_plus`로 공유. iPad 위치 지정(`sharePositionOrigin`)은 `share_screen.dart`의 `_share()` 방식을 그대로 따른다.
+  - **불러오기:** 버튼 두 개 `backup.import_merge`("기존 보드에 추가")와 `backup.import_replace`("기존 보드를 지우고 교체"). `showConfirmDialog`는 버튼이 2개(확인/취소)뿐이라 3지선다 다이얼로그를 새로 만들지 않고 이렇게 나눈다. 각 버튼: `file_picker`로 파일 하나 선택 → 확장자(소문자로 바꿔 비교)가 `.json`이 아니거나 5MB 넘으면 `backup.invalid_file` → 바이트로 읽어 `utf8.decode`(UTF-8이 아니면 `FormatException`이 나서 `backup.invalid_file`로 보인다. `readAsString`은 `FileSystemException`이 나므로 쓰지 않는다) → `decodeBackup` → **교체일 때만** `showConfirmDialog`(제목 `backup.import_confirm_title`, 본문 `backup.replace_confirm_body`({count}=보드 수), 확인 버튼 `backup.import_replace`) → import → `backup.import_done` 스낵바.
+  - "추가"는 지우는 것이 없으므로 다이얼로그 없이 바로 불러온다. `showConfirmDialog`의 확인 버튼은 위험 동작용 빨간색으로 고정이라 "추가"에는 쓰지 않는다.
+  - 저장·공유·불러오기가 진행 중일 때는 화면의 버튼을 모두 비활성화한다(중복 실행 방지). `await` 뒤에는 `mounted`를 확인한 다음 `context`를 쓴다.
+  - `file_picker` API (13.1.0 기준으로 확인함. 설치된 버전이 다르면 README를 따른다): `FilePicker.platform`이 아니라 **static 메서드**다. 고르기는 `FilePicker.pickFile(...)`(`PlatformFile?` 반환), 저장은 `FilePicker.saveFile(fileName: ..., bytes: ..., mimeType: 'application/json')`(`Uri?` 반환, 취소하면 `null`). Dart 3.10 이상, Flutter 3.38 이상이 필요하다(현재 Flutter 3.47.2라 문제없음).
+  - 고른 파일(`PlatformFile`)에는 예전의 `size`, `bytes` 속성이 없다. 이름은 `name`, 크기는 `await file.length()`(`null`이면 읽은 바이트 길이로 5MB를 검사), 내용은 `await file.readAsBytes()`로 얻는다. `path`는 Android에서 `null`일 수 있으므로 `File(path)`로 읽지 않는다.
+  - `file_picker`는 `FileType.any`로 열고 확장자는 직접 검사한다. Android 일부 파일 관리자에서 `FileType.custom` + `['json']`이면 .json 파일이 선택 불가로 보이는 경우가 있다.
+  - `FormatException`은 `backup.invalid_file`, 그 밖의 실패는 `common.error` 스낵바. `common.error`는 `{error}` 변수가 필요하다: `'common.error'.tr(namedArgs: {'error': '$e'})`.
 - `lib/screens/settings_screen.dart`: 테마 그룹과 정보 그룹 사이에 `settings.data_section` 그룹, 행 `settings.backup`(아이콘 `Icons.save_alt_rounded`, 오른쪽 chevron) → `BackupScreen`.
-- 번역 키: `settings.data_section`, `settings.backup`, `backup.title`, `backup.export`, `backup.export_hint`, `backup.import`, `backup.import_hint`, `backup.import_confirm_title`, `backup.import_confirm_body`({count}), `backup.import_merge`, `backup.import_replace`, `backup.import_done`({count}), `backup.invalid_file`.
+- 화면 구성: 구역 제목 `backup.export`("내보내기") + 설명 `backup.export_hint` + 버튼 `backup.save`, `backup.share`. 그 아래 구역 제목 `backup.import`("불러오기") + 설명 `backup.import_hint` + 버튼 `backup.import_merge`, `backup.import_replace`.
+- 번역 키: `settings.data_section`, `settings.backup`, `backup.title`, `backup.export`, `backup.export_hint`, `backup.save`, `backup.save_done`, `backup.share`, `backup.import`, `backup.import_hint`, `backup.import_confirm_title`, `backup.replace_confirm_body`({count}), `backup.import_merge`, `backup.import_replace`, `backup.import_done`({count}), `backup.invalid_file`.
 
 ### 테스트
-- 새 `test/backup/backup_codec_test.dart`: 왕복 후 제목·메모·진행률·체크리스트가 같다. `app` 다름, `format` 2, position 중복, 깨진 JSON은 `FormatException`. goals 5개짜리는 8개로 채워진다.
-- `test/db/sqlite_helper_test.dart`: `importBoards` 추가(기존 유지, 새 id), 교체(기존 삭제), 체크리스트의 `goal_id`가 새 goal을 가리킨다.
-- `test/screens/app_flow_test.dart`: 설정 → 백업 화면 진입 1개. `_FakeDb`에 새 메서드 구현.
+- 새 `test/backup/backup_codec_test.dart`: 왕복 후 제목·메모·진행률·체크리스트가 같다. `app` 다름, `format` 2, position 중복, 깨진 JSON, 타입이 틀린 값(`title`이 숫자 등), 빈 `boards`는 `FormatException`. 제목이 빈 goal의 체크리스트와 진행률은 버려진다. goals 5개짜리는 8개로 채워진다.
+- `test/db/sqlite_helper_test.dart`: `importBoards` 추가(기존 유지, 새 id), 교체(기존 삭제), 체크리스트의 `goal_id`가 새 goal을 가리킨다, 체크리스트와 어긋난 `progress`는 다시 계산된다, goal의 `updated_at`이 파일 값 그대로다.
+  - `importBoards`는 인스턴스 메서드라 메모리 DB가 아니라 **싱글톤 `SQLiteHelper.instance`(ffi 파일 DB)** 로 테스트한다(기존 CRUD 그룹 방식). 다른 테스트와 DB를 공유하므로 "추가"는 개수가 아니라 반환된 새 id로 확인하고, 교체 테스트는 전부 지우므로 파일 **맨 끝**에 둔다(`boards.length >= 3` 같은 앞쪽 테스트가 깨지지 않게).
+- `test/screens/app_flow_test.dart`: 설정 → 백업 화면 진입 1개. `_FakeDb`에 새 메서드 구현. 같은 파일에 `importJson`이 잘못된 JSON에서 `FormatException`을 그대로 던지고 목록 상태가 오류로 바뀌지 않는다는 테스트 1개(`_FakeDb`로 `databaseProvider`를 덮어쓴 `ProviderContainer` 사용. `goal_provider_test.dart`에는 DB 가짜 구현이 없어 목록이 처음부터 오류 상태라 거기에 두지 않는다).
 
 ### 완료 기준
-- Android 에뮬레이터와 iOS 시뮬레이터에서 내보내기 → 앱 데이터 삭제 → 불러오기로 보드와 체크리스트 상태가 복원된다.
-- 새 권한이 추가되지 않았는지 `AndroidManifest`(병합 결과)와 `Info.plist`를 확인해 보고한다.
+- Android 에뮬레이터와 iOS 시뮬레이터에서 "파일로 저장" → 앱 데이터 삭제 → 불러오기로 보드와 체크리스트 상태가 복원된다.
+- 새 권한이 추가되지 않았는지 `AndroidManifest`(병합 결과)와 `Info.plist`를 확인해 보고한다. `file_picker` 13.1.0의 Android 매니페스트에는 권한 선언이 없다.
+- iOS: `file_picker` 13.1.0은 사진 선택에 `PHPickerViewController`를 써서 사진 권한 문구가 필요 없다. Info.plist에 사진 권한 문구를 추가하지 않는다. App Store 업로드 뒤 경고 메일(ITMS-90683)이 오는지는 R1에서 확인한다.
 
 ## 2단계. 삭제 되돌리기 (`feat/undo-delete`)
 
@@ -185,8 +200,7 @@ flutter pub get
 - 번역 키: `common.undo`, `board.restored`, `cell.restored`.
 
 ### 테스트
-- `test/providers/goal_provider_test.dart`: 삭제 → 복원 후 같은 내용의 보드가 있다(체크리스트 포함). 비우기 → 복원 후 제목·메모·체크리스트·진행률이 같다.
-- `test/screens/app_flow_test.dart`: 보드 삭제 후 `common.undo`를 누르면 목록에 다시 보인다.
+- `test/screens/app_flow_test.dart`: 보드 삭제 후 `common.undo`를 누르면 목록에 다시 보인다. 같은 파일에 provider 테스트 2개(`_FakeDb`로 `databaseProvider`를 덮어쓴 `ProviderContainer` 사용): 삭제 → 복원 후 같은 내용의 보드가 있다(체크리스트 포함). 비우기 → 복원 후 제목·메모·체크리스트·진행률이 같다. `goal_provider_test.dart`에는 DB 가짜 구현이 없어 거기에 두지 않는다. `_FakeDb`에 `restoreGoal`을 구현한다.
 
 ## 3단계. 세부 목표 마감일 (`feat/deadline`)
 
@@ -278,6 +292,7 @@ flutter pub get
 - `flutter analyze`, `flutter test`, `flutter build ios --release --no-codesign`, `flutter build appbundle --release` 성공 확인.
 - **업로드 레인은 실행하지 않는다.** 사용자에게 실행할 명령을 알려 준다: `fastlane ios beta`, `fastlane ios metadata`, `fastlane android build` 후 콘솔 업로드, `fastlane android changelogs`.
 - 보고에 포함: Play 데이터 보안·권한 선언에서 바뀌는 것(알림 권한), App Store 개인정보 답변 변화 여부.
+- 사용자가 TestFlight 업로드를 한 뒤 App Store Connect 메일에 `file_picker` 관련 경고(ITMS-90683, 사진 권한 문구 누락)가 왔는지 사용자에게 확인을 요청한다. 올 가능성은 낮다. 오면 그때 사용자와 대응 방법을 정한다.
 
 ---
 

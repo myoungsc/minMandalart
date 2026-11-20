@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/goal_model.dart';
+import '../backup/backup_codec.dart';
 import '../db/sqlite_helper.dart';
 
 final databaseProvider = Provider<SQLiteHelper>((ref) {
@@ -8,8 +9,9 @@ final databaseProvider = Provider<SQLiteHelper>((ref) {
 
 class MandalartBoardsNotifier extends StateNotifier<AsyncValue<List<MandalartBoard>>> {
   final SQLiteHelper _db;
+  final Ref _ref;
 
-  MandalartBoardsNotifier(this._db) : super(const AsyncValue.loading()) {
+  MandalartBoardsNotifier(this._db, this._ref) : super(const AsyncValue.loading()) {
     loadBoards();
   }
 
@@ -41,6 +43,20 @@ class MandalartBoardsNotifier extends StateNotifier<AsyncValue<List<MandalartBoa
     }
   }
 
+  /// 백업 JSON. 실패는 목록 상태로 바꾸지 않고 호출한 화면으로 던진다.
+  Future<String> exportJson() async =>
+      encodeBackup(await _db.readAllBoardsFull());
+
+  /// 백업 JSON을 불러와 가져온 보드 수를 반환한다. 형식이 틀리면 [FormatException]을 그대로 던진다.
+  /// 교체했으면 열린 보드는 지워졌으므로 비운다.
+  Future<int> importJson(String json, {required bool replace}) async {
+    final boards = decodeBackup(json);
+    await _db.importBoards(boards, replace: replace);
+    if (replace) _ref.read(currentBoardProvider.notifier).clearBoard();
+    await loadBoards();
+    return boards.length;
+  }
+
   Future<void> deleteBoard(int id) async {
     try {
       await _db.deleteMandalartBoard(id);
@@ -54,7 +70,7 @@ class MandalartBoardsNotifier extends StateNotifier<AsyncValue<List<MandalartBoa
 final mandalartBoardsProvider =
     StateNotifierProvider<MandalartBoardsNotifier, AsyncValue<List<MandalartBoard>>>((ref) {
   final db = ref.watch(databaseProvider);
-  return MandalartBoardsNotifier(db);
+  return MandalartBoardsNotifier(db, ref);
 });
 
 class CurrentBoardNotifier extends StateNotifier<MandalartBoard?> {
