@@ -410,3 +410,20 @@
 
 ## 2026-11-20 10:21:10
 - PR 만들고 merge까지 진행
+## 2026-11-20 10:27:58
+- /ponytail:ponytail-review 실행 (과한 복잡도 리뷰)
+
+## 2026-11-20 10:28:14
+- git fetch 해서 main 최신화
+
+## 2026-11-20 10:29:30
+- /ponytail:ponytail-review 실행 (방금 머지된 백업·복원 PR #9 diff 대상)
+
+## 2026-11-20 10:41:10
+- /ponytail:ponytail 실행 (ponytail 모드 켜기)
+
+## 2026-11-20 10:41:35
+- /ponytail:ponytail-review 다시 실행
+
+## 2026-11-20 10:46:55
+- main에 있는 리뷰 지적(백업·복원 3곳)만 정리

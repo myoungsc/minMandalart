@@ -28,11 +28,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   final _shareKey = GlobalKey();
   bool _busy = false;
 
-  String get _fileName {
-    final now = DateTime.now();
-    String two(int n) => '$n'.padLeft(2, '0');
-    return 'minimanda_backup_${now.year}${two(now.month)}${two(now.day)}.json';
-  }
+  String get _fileName =>
+      'minimanda_backup_${DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '')}.json';
 
   /// 진행 중에는 버튼을 모두 막아 같은 작업이 두 번 실행되지 않게 한다.
   Future<void> _run(Future<void> Function() task) async {
@@ -95,7 +92,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     // UTF-8이 아니면 FormatException. 메모장 등이 붙이는 BOM은 jsonDecode가 못 읽으므로 뗀다.
     var json = utf8.decode(bytes);
     if (json.startsWith('﻿')) json = json.substring(1);
-    final count = decodeBackup(json).length;
+    final boards = decodeBackup(json);
+    final count = boards.length;
     if (!mounted) return;
 
     if (replace) {
@@ -108,11 +106,11 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       if (!confirmed || !mounted) return;
     }
 
-    final imported = await ref
+    await ref
         .read(mandalartBoardsProvider.notifier)
-        .importJson(json, replace: replace);
+        .importBoards(boards, replace: replace);
     if (!mounted) return;
-    _showDone('backup.import_done'.tr(namedArgs: {'count': '$imported'}));
+    _showDone('backup.import_done'.tr(namedArgs: {'count': '$count'}));
   }
 
   @override
