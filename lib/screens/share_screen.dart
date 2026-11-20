@@ -16,6 +16,7 @@ const double _cardSize = 358;
 const double _outputSize = 1080;
 
 /// 공유 미리보기. 진입하면 1080×1080 이미지를 만들고, 공유하기로 기기 공유 창을 연다.
+/// 이미지는 밝게/어둡게 중 고른 팔레트로 만든다. 처음에는 지금 앱 테마를 따른다.
 class ShareScreen extends StatefulWidget {
   final MandalartBoard board;
 
@@ -30,6 +31,14 @@ class _ShareScreenState extends State<ShareScreen> {
   final _buttonKey = GlobalKey();
   XFile? _image;
   bool _failed = false;
+  MmColors? _colors;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // initState에서는 테마를 읽을 수 없어 여기서 한 번만 정한다.
+    _colors ??= context.mm;
+  }
 
   @override
   void initState() {
@@ -56,7 +65,11 @@ class _ShareScreenState extends State<ShareScreen> {
   }
 
   Future<void> _generate() async {
-    setState(() => _failed = false);
+    // 다시 만드는 동안 이전 이미지가 공유되지 않게 비운다.
+    setState(() {
+      _failed = false;
+      _image = null;
+    });
     try {
       await _waitUntilPainted();
       if (!mounted) return;
@@ -66,7 +79,9 @@ class _ShareScreenState extends State<ShareScreen> {
       final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
       image.dispose();
       final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/minimanda_${widget.board.id}.png');
+      // 밝게/어둡게를 다른 경로로 저장해, 경로로 캐시하는 앱이 이전 이미지를 보여 주지 않게 한다.
+      final style = identical(_colors, MmColors.dark) ? '_dark' : '';
+      final file = File('${directory.path}/minimanda_${widget.board.id}$style.png');
       await file.writeAsBytes(bytes!.buffer.asUint8List());
       if (mounted) setState(() => _image = XFile(file.path, mimeType: 'image/png'));
     } catch (e) {
@@ -80,6 +95,12 @@ class _ShareScreenState extends State<ShareScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('common.error'.tr(namedArgs: {'error': '$e'}))),
     );
+  }
+
+  void _selectColors(MmColors colors) {
+    if (identical(colors, _colors)) return;
+    setState(() => _colors = colors);
+    _generate();
   }
 
   Future<void> _share() async {
@@ -123,6 +144,31 @@ class _ShareScreenState extends State<ShareScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           child: Column(
             children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: _cardSize),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _StyleOption(
+                        icon: Icons.light_mode_rounded,
+                        label: 'share.style_light'.tr(),
+                        selected: identical(_colors, MmColors.light),
+                        onTap: generating ? null : () => _selectColors(MmColors.light),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _StyleOption(
+                        icon: Icons.dark_mode_rounded,
+                        label: 'share.style_dark'.tr(),
+                        selected: identical(_colors, MmColors.dark),
+                        onTap: generating ? null : () => _selectColors(MmColors.dark),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               // 좁은 화면에서는 줄여 보여 주되, 이미지는 항상 같은 크기로 만든다.
               FittedBox(
                 fit: BoxFit.scaleDown,
@@ -138,7 +184,7 @@ class _ShareScreenState extends State<ShareScreen> {
                         children: [
                           RepaintBoundary(
                             key: _cardKey,
-                            child: ShareCard(board: widget.board),
+                            child: ShareCard(board: widget.board, colors: _colors!),
                           ),
                           if (generating)
                             Positioned.fill(
@@ -184,26 +230,105 @@ class _ShareScreenState extends State<ShareScreen> {
   }
 }
 
-/// 공유 이미지. 테마와 관계없이 항상 라이트 팔레트로 그린다.
-class ShareCard extends StatelessWidget {
-  final MandalartBoard board;
+/// 밝게/어둡게 선택 버튼 하나. 선택된 쪽은 ink 배경으로 채운다.
+class _StyleOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
 
-  const ShareCard({super.key, required this.board});
-
-  static const _c = MmColors.light;
+  const _StyleOption({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final c = context.mm;
+    final foreground = selected ? c.bg : c.ink;
+    return Semantics(
+      container: true,
+      inMutuallyExclusiveGroup: true,
+      checked: selected,
+      child: Opacity(
+        opacity: onTap == null ? 0.38 : 1,
+        child: Material(
+          color: selected ? c.ink : c.surface,
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: c.line, width: 2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, size: 20, color: foreground),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: foreground,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 공유 이미지. 앱 테마와 관계없이 [colors] 팔레트로 그린다.
+/// 테마를 한 번 바꿔 두므로 안쪽은 `context.mm`과 공용 위젯을 그대로 쓴다.
+class ShareCard extends StatelessWidget {
+  final MandalartBoard board;
+  final MmColors colors;
+
+  const ShareCard({super.key, required this.board, required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(extensions: [colors]),
+      child: _ShareCardBody(board: board),
+    );
+  }
+}
+
+class _ShareCardBody extends StatelessWidget {
+  final MandalartBoard board;
+
+  const _ShareCardBody({required this.board});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mm;
     final byPosition = {for (final g in board.subGoals) g.position: g};
     return MediaQuery.withNoTextScaling(
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: _c.bg,
-          border: Border.all(color: _c.line, width: 2),
+          color: c.bg,
+          border: Border.all(color: c.line, width: 2),
         ),
         child: DefaultTextStyle.merge(
-          style: TextStyle(color: _c.ink),
+          style: TextStyle(color: c.ink),
           child: Column(
             children: [
               Row(
@@ -246,7 +371,7 @@ class ShareCard extends StatelessWidget {
                           children: [
                             for (int col = 0; col < 3; col++) ...[
                               if (col > 0) const SizedBox(width: 5),
-                              Expanded(child: _cell(byPosition, row * 3 + col)),
+                              Expanded(child: _cell(c, byPosition, row * 3 + col)),
                             ],
                           ],
                         ),
@@ -278,7 +403,7 @@ class ShareCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: _c.muted,
+                      color: c.muted,
                     ),
                   ),
                 ],
@@ -290,13 +415,13 @@ class ShareCard extends StatelessWidget {
     );
   }
 
-  Widget _cell(Map<int, Goal> byPosition, int index) {
+  Widget _cell(MmColors c, Map<int, Goal> byPosition, int index) {
     if (index == 4) {
       return Container(
         padding: const EdgeInsets.all(6),
         alignment: Alignment.centerLeft,
         decoration: BoxDecoration(
-          color: _c.center,
+          color: c.center,
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(
@@ -304,7 +429,7 @@ class ShareCard extends StatelessWidget {
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: _c.onCenter,
+            color: c.onCenter,
             fontSize: 13,
             fontWeight: FontWeight.w800,
             height: 1.28,
@@ -316,12 +441,11 @@ class ShareCard extends StatelessWidget {
     final goal = byPosition[index > 4 ? index - 1 : index];
     final status = goal?.status ?? GoalStatus.empty;
     if (status == GoalStatus.empty) {
-      return Theme(
-        data: AppTheme.lightTheme,
-        child: const DashedBox(radius: 4),
-      );
+      return const DashedBox(radius: 4);
     }
 
+    // 완료 칸만 accent 배경이라 onAccent, 나머지는 팔레트의 ink를 쓴다.
+    final foreground = status == GoalStatus.done ? MmColors.onAccent : c.ink;
     final (icon, label) = switch (status) {
       GoalStatus.done => (Icons.check_circle_rounded, 'board.status_done'.tr()),
       GoalStatus.inProgress => (Icons.timelapse_rounded, '${goal!.progress}%'),
@@ -331,8 +455,8 @@ class ShareCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(4),
       child: Container(
         decoration: BoxDecoration(
-          color: status == GoalStatus.done ? _c.accent : _c.surface,
-          border: Border.all(color: _c.line, width: 2),
+          color: status == GoalStatus.done ? c.accent : c.surface,
+          border: Border.all(color: c.line, width: 2),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Stack(
@@ -344,7 +468,7 @@ class ShareCard extends StatelessWidget {
                   child: FractionallySizedBox(
                     heightFactor: goal!.progress / 100,
                     widthFactor: 1,
-                    child: ColoredBox(color: _c.accentSoft),
+                    child: ColoredBox(color: c.accentSoft),
                   ),
                 ),
               ),
@@ -359,8 +483,8 @@ class ShareCard extends StatelessWidget {
                         goal!.title,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: MmColors.onAccent,
+                        style: TextStyle(
+                          color: foreground,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           height: 1.28,
@@ -369,15 +493,15 @@ class ShareCard extends StatelessWidget {
                     ),
                     Row(
                       children: [
-                        Icon(icon, size: 12, color: MmColors.onAccent),
+                        Icon(icon, size: 12, color: foreground),
                         const SizedBox(width: 2),
                         Expanded(
                           child: Text(
                             label,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: MmColors.onAccent,
+                            style: TextStyle(
+                              color: foreground,
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
                             ),

@@ -85,7 +85,9 @@
     "title": "Share",
     "generating": "Creating image…",
     "hint": "Shared as a 1:1 square image. You can save it from the share sheet.",
-    "button": "Share"
+    "button": "Share",
+    "style_light": "Light",
+    "style_dark": "Dark"
   },
   "settings": {
     "title": "Settings",

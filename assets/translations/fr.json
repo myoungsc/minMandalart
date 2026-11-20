@@ -85,7 +85,9 @@
     "title": "Partager",
     "generating": "Création de l'image…",
     "hint": "Partagée en image carrée 1:1. Vous pouvez l'enregistrer depuis la feuille de partage.",
-    "button": "Partager"
+    "button": "Partager",
+    "style_light": "Clair",
+    "style_dark": "Sombre"
   },
   "settings": {
     "title": "Réglages",

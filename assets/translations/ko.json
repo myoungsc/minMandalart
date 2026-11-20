@@ -85,7 +85,9 @@
     "title": "공유",
     "generating": "이미지를 만드는 중…",
     "hint": "1:1 정사각형 이미지로 공유돼요. 이미지 저장은 공유 창에서 할 수 있어요.",
-    "button": "공유하기"
+    "button": "공유하기",
+    "style_light": "밝게",
+    "style_dark": "어둡게"
   },
   "settings": {
     "title": "설정",

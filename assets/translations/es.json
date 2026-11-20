@@ -85,7 +85,9 @@
     "title": "Compartir",
     "generating": "Creando imagen…",
     "hint": "Se comparte como imagen cuadrada 1:1. Puedes guardarla desde la hoja de compartir.",
-    "button": "Compartir"
+    "button": "Compartir",
+    "style_light": "Claro",
+    "style_dark": "Oscuro"
   },
   "settings": {
     "title": "Ajustes",
