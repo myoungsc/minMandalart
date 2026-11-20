@@ -146,26 +146,33 @@ class _ShareScreenState extends State<ShareScreen> {
             children: [
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: _cardSize),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _StyleOption(
-                        icon: Icons.light_mode_rounded,
-                        label: 'share.style_light'.tr(),
-                        selected: identical(_colors, MmColors.light),
-                        onTap: generating ? null : () => _selectColors(MmColors.light),
-                      ),
+                child: SegmentedButton<MmColors>(
+                  segments: [
+                    ButtonSegment(
+                      value: MmColors.light,
+                      icon: const Icon(Icons.light_mode_rounded),
+                      label: Text('share.style_light'.tr()),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _StyleOption(
-                        icon: Icons.dark_mode_rounded,
-                        label: 'share.style_dark'.tr(),
-                        selected: identical(_colors, MmColors.dark),
-                        onTap: generating ? null : () => _selectColors(MmColors.dark),
-                      ),
+                    ButtonSegment(
+                      value: MmColors.dark,
+                      icon: const Icon(Icons.dark_mode_rounded),
+                      label: Text('share.style_dark'.tr()),
                     ),
                   ],
+                  selected: {_colors!},
+                  showSelectedIcon: false,
+                  expandedInsets: EdgeInsets.zero,
+                  onSelectionChanged: generating ? null : (s) => _selectColors(s.first),
+                  style: SegmentedButton.styleFrom(
+                    backgroundColor: c.surface,
+                    foregroundColor: c.ink,
+                    selectedBackgroundColor: c.ink,
+                    selectedForegroundColor: c.bg,
+                    side: BorderSide(color: c.line, width: 2),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    minimumSize: const Size.fromHeight(48),
+                    textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -230,70 +237,6 @@ class _ShareScreenState extends State<ShareScreen> {
   }
 }
 
-/// 밝게/어둡게 선택 버튼 하나. 선택된 쪽은 ink 배경으로 채운다.
-class _StyleOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  const _StyleOption({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.mm;
-    final foreground = selected ? c.bg : c.ink;
-    return Semantics(
-      container: true,
-      inMutuallyExclusiveGroup: true,
-      checked: selected,
-      child: Opacity(
-        opacity: onTap == null ? 0.38 : 1,
-        child: Material(
-          color: selected ? c.ink : c.surface,
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: c.line, width: 2),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: InkWell(
-            onTap: onTap,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 48),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(icon, size: 20, color: foreground),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        label,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: foreground,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// 공유 이미지. 앱 테마와 관계없이 [colors] 팔레트로 그린다.
 /// 테마를 한 번 바꿔 두므로 안쪽은 `context.mm`과 공용 위젯을 그대로 쓴다.
 class ShareCard extends StatelessWidget {
@@ -306,18 +249,11 @@ class ShareCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Theme(
       data: Theme.of(context).copyWith(extensions: [colors]),
-      child: _ShareCardBody(board: board),
+      child: Builder(builder: _build),
     );
   }
-}
 
-class _ShareCardBody extends StatelessWidget {
-  final MandalartBoard board;
-
-  const _ShareCardBody({required this.board});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _build(BuildContext context) {
     final c = context.mm;
     final byPosition = {for (final g in board.subGoals) g.position: g};
     return MediaQuery.withNoTextScaling(

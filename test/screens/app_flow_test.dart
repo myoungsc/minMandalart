@@ -655,7 +655,7 @@ void main() {
       await tester.tap(find.text('board.share'));
       expect(await waitForImage(tester, dir), isNotNull);
 
-      // 같은 경로에 다시 저장되므로 지워 두고 새 파일을 기다린다.
+      // 이전 파일이 남아 있으면 다시 그려지기 전에 대기가 끝나므로 지워 두고 새 파일을 기다린다.
       await tester.runAsync(() async {
         for (final f in dir.listSync()) {
           f.deleteSync();
