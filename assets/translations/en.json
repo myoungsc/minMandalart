@@ -97,7 +97,9 @@
     "theme_system": "Follow system",
     "info_section": "About",
     "about": "About Mandalart",
-    "version": "App version"
+    "version": "App version",
+    "data_section": "Data",
+    "backup": "Backup & restore"
   },
   "about": {
     "title": "About Mandalart",
@@ -109,5 +111,21 @@
     "step2": "Write the key elements in the 8 surrounding cells",
     "step3": "Write specific actions for each element",
     "step4": "Track your progress and reach your goal"
+  },
+  "backup": {
+    "title": "Backup & restore",
+    "export": "Export",
+    "export_hint": "Save all boards, including checklists, as one file. Keep it somewhere safe, like iCloud Drive or Google Drive.",
+    "save": "Save to file",
+    "save_done": "Backup file saved",
+    "share": "Share",
+    "import": "Import",
+    "import_hint": "Choose a miniManda backup file (.json) to bring its boards back.",
+    "import_merge": "Add to my boards",
+    "import_replace": "Replace my boards",
+    "import_confirm_title": "Replace all boards?",
+    "replace_confirm_body": "All current boards will be deleted and replaced with the boards in this file ({count}). This can't be undone.",
+    "import_done": "Boards imported: {count}",
+    "invalid_file": "This isn't a valid miniManda backup file"
   }
 }

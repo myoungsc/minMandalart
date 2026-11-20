@@ -562,4 +562,87 @@ void main() {
       expect(await v3.query('checklist_items'), isEmpty);
     });
   });
+
+  // 싱글톤 DB를 다른 테스트와 함께 쓴다. 교체는 전부 지우므로 이 그룹은 파일 맨 끝에 둔다.
+  group('백업 불러오기 (importBoards)', () {
+    final helper = SQLiteHelper.instance;
+    final created = DateTime(2025, 5, 6);
+    final updated = DateTime(2025, 6, 7);
+
+    MandalartBoard backupBoard(String title) => MandalartBoard(
+          id: 999,
+          centerGoal: title,
+          createdAt: created,
+          subGoals: [
+            for (int p = 0; p < 8; p++)
+              Goal(
+                id: 9990 + p,
+                title: p == 0 ? '체크리스트 칸' : (p == 1 ? '완료 칸' : ''),
+                parentId: 999,
+                position: p,
+                // 체크리스트와 어긋난 진행률: 불러올 때 다시 계산돼야 한다.
+                progress: p == 0 ? 90 : (p == 1 ? 100 : 0),
+                createdAt: created,
+                updatedAt: p == 0 ? updated : null,
+                checklistItems: p == 0
+                    ? [
+                        ChecklistItem(id: 1, goalId: 9990, title: 'a', isDone: true, position: 0, createdAt: created),
+                        ChecklistItem(id: 2, goalId: 9990, title: 'b', position: 1, createdAt: created),
+                        ChecklistItem(id: 3, goalId: 9990, title: 'c', position: 2, createdAt: created),
+                      ]
+                    : const [],
+              ),
+          ],
+        );
+
+    test('추가: 기존 보드는 유지되고 새 id로 들어간다', () async {
+      final existingId = await helper.createBoardWithEmptyGoals(
+        MandalartBoard(centerGoal: '기존 보드', createdAt: DateTime.now()),
+      );
+
+      final ids = await helper.importBoards([backupBoard('가져온 보드')], replace: false);
+
+      expect(ids, hasLength(1));
+      expect(ids.single, isNot(999));
+      expect(await helper.readMandalartBoard(existingId), isNotNull);
+      final board = (await helper.readMandalartBoard(ids.single))!;
+      expect(board.centerGoal, '가져온 보드');
+      expect(board.subGoals, hasLength(8));
+      expect(board.subGoals.every((g) => g.parentId == ids.single), isTrue);
+    });
+
+    test('체크리스트는 새 칸을 가리키고, 진행률은 다시 계산되며 수정 시각은 파일 값 그대로다', () async {
+      final ids = await helper.importBoards([backupBoard('진행률')], replace: false);
+      final board = (await helper.readMandalartBoard(ids.single))!;
+      final goal = board.subGoals[0];
+
+      expect(goal.id, isNot(9990));
+      expect(goal.checklistItems.map((i) => i.title), ['a', 'b', 'c']);
+      expect(goal.checklistItems.every((i) => i.goalId == goal.id), isTrue);
+      expect(goal.progress, 33);
+      expect(goal.updatedAt, updated);
+      expect(board.subGoals[1].progress, 100, reason: '체크리스트 없는 칸은 파일 값');
+    });
+
+    test('교체: 기존 보드를 모두 지우고 파일 보드만 남는다', () async {
+      await helper.createBoardWithEmptyGoals(
+        MandalartBoard(centerGoal: '지워질 보드', createdAt: DateTime.now()),
+      );
+
+      final ids = await helper.importBoards(
+        [backupBoard('첫째'), backupBoard('둘째')],
+        replace: true,
+      );
+
+      final boards = await helper.readAllBoardsFull();
+      expect(boards.map((b) => b.id).toSet(), ids.toSet());
+      expect(boards.map((b) => b.centerGoal).toSet(), {'첫째', '둘째'});
+      expect(boards.first.subGoals[0].checklistItems, hasLength(3));
+      final db = await helper.database;
+      final orphans = await db.rawQuery(
+        'SELECT COUNT(*) AS n FROM goals WHERE parent_id NOT IN (SELECT id FROM mandalart_boards)',
+      );
+      expect(orphans.single['n'], 0);
+    });
+  });
 }
