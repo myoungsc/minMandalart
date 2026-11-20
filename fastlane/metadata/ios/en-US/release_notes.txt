@@ -1,5 +1,4 @@
-• Ads have been added to keep miniManda free.
-  - A banner ad appears at the bottom of the home and board screens
-  - A full-screen ad may appear after you create a new board
-• Only non-personalized ads are shown
-• Your boards and notes are still stored only on your device.
+• Added backup & restore (Settings > Backup & restore).
+  - Save all your boards to a file, or share the file with another app
+  - Load a backup file to add it to your boards, or to replace your boards
+• Backup files are saved only where you choose and are never sent to the developer.
