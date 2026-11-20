@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mandalart/core/ads/ads.dart';
+import 'package:mandalart/core/backup/backup_codec.dart';
 import 'package:mandalart/core/db/sqlite_helper.dart';
 import 'package:mandalart/core/providers/goal_provider.dart';
 import 'package:mandalart/core/theme/app_theme.dart';
@@ -716,30 +717,18 @@ void main() {
       return notifier;
     }
 
-    test('잘못된 JSON이면 FormatException을 그대로 던지고 목록 상태는 유지된다', () async {
-      final notifier = await loaded();
-
-      await expectLater(
-        notifier.importJson('{"app":"other"}', replace: true),
-        throwsFormatException,
-      );
-      final state = container.read(mandalartBoardsProvider);
-      expect(state.hasError, isFalse);
-      expect(state.value, hasLength(1));
-    });
-
     test('내보낸 JSON을 추가로 불러오면 보드가 늘고, 교체하면 파일 내용만 남는다', () async {
       final notifier = await loaded();
-      final json = await notifier.exportJson();
+      final imported = decodeBackup(await notifier.exportJson());
 
-      expect(await notifier.importJson(json, replace: false), 1);
+      await notifier.importBoards(imported, replace: false);
       expect(container.read(mandalartBoardsProvider).value, hasLength(2));
 
       final current = container.read(currentBoardProvider.notifier);
       await current.loadBoard(container.read(mandalartBoardsProvider).value!.first.id!);
       expect(container.read(currentBoardProvider), isNotNull);
 
-      expect(await notifier.importJson(json, replace: true), 1);
+      await notifier.importBoards(imported, replace: true);
       // 열려 있던 보드는 지워졌으므로 비운다.
       expect(container.read(currentBoardProvider), isNull);
       final boards = container.read(mandalartBoardsProvider).value!;

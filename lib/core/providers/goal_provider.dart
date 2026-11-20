@@ -47,14 +47,11 @@ class MandalartBoardsNotifier extends StateNotifier<AsyncValue<List<MandalartBoa
   Future<String> exportJson() async =>
       encodeBackup(await _db.readAllBoardsFull());
 
-  /// 백업 JSON을 불러와 가져온 보드 수를 반환한다. 형식이 틀리면 [FormatException]을 그대로 던진다.
-  /// 교체했으면 열린 보드는 지워졌으므로 비운다.
-  Future<int> importJson(String json, {required bool replace}) async {
-    final boards = decodeBackup(json);
+  /// [decodeBackup]으로 읽은 보드를 넣는다. 교체했으면 열린 보드는 지워졌으므로 비운다.
+  Future<void> importBoards(List<MandalartBoard> boards, {required bool replace}) async {
     await _db.importBoards(boards, replace: replace);
     if (replace) _ref.read(currentBoardProvider.notifier).clearBoard();
     await loadBoards();
-    return boards.length;
   }
 
   Future<void> deleteBoard(int id) async {

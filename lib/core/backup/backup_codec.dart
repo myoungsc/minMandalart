@@ -49,8 +49,6 @@ List<MandalartBoard> decodeBackup(String json) {
     // 빈 파일로 교체하면 기존 보드만 지워지므로 막는다.
     if (boards.isEmpty) throw const FormatException('보드가 없음');
     return [for (final b in boards) _decodeBoard(b as Map<String, dynamic>)];
-  } on FormatException {
-    rethrow;
   } on TypeError catch (e) {
     // fromMap의 `as` 형변환 실패: 타입이 틀리거나 키가 없는 파일
     throw FormatException('잘못된 값: $e');
