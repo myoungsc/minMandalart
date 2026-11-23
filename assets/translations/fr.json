@@ -85,7 +85,9 @@
     "title": "Partager",
     "generating": "Création de l'image…",
     "hint": "Partagée en image carrée 1:1. Vous pouvez l'enregistrer depuis la feuille de partage.",
-    "button": "Partager"
+    "button": "Partager",
+    "style_light": "Clair",
+    "style_dark": "Sombre"
   },
   "settings": {
     "title": "Réglages",
@@ -99,7 +101,9 @@
     "reminder_section": "Rappel",
     "reminder_enabled": "Rappel quotidien",
     "reminder_time": "Heure du rappel",
-    "reminder_denied": "Les notifications sont désactivées. Autorisez-les dans les réglages de l'appareil."
+    "reminder_denied": "Les notifications sont désactivées. Autorisez-les dans les réglages de l'appareil.",
+    "data_section": "Données",
+    "backup": "Sauvegarde et restauration"
   },
   "about": {
     "title": "À propos du Mandalart",
@@ -115,5 +119,21 @@
   "reminder": {
     "title": "Vos objectifs du jour",
     "body": "Ouvrez votre tableau et cochez ce que vous avez fait aujourd'hui."
+  },
+  "backup": {
+    "title": "Sauvegarde et restauration",
+    "export": "Exporter",
+    "export_hint": "Enregistrez tous les tableaux, avec leurs listes, dans un seul fichier. Conservez-le en lieu sûr, comme iCloud Drive ou Google Drive.",
+    "save": "Enregistrer dans un fichier",
+    "save_done": "Fichier de sauvegarde enregistré",
+    "share": "Partager",
+    "import": "Importer",
+    "import_hint": "Choisissez un fichier de sauvegarde miniManda (.json) pour récupérer ses tableaux.",
+    "import_merge": "Ajouter à mes tableaux",
+    "import_replace": "Remplacer mes tableaux",
+    "import_confirm_title": "Remplacer tous les tableaux ?",
+    "replace_confirm_body": "Tous les tableaux actuels seront supprimés et remplacés par les tableaux du fichier ({count}). Action irréversible.",
+    "import_done": "Tableaux importés : {count}",
+    "invalid_file": "Ce n'est pas un fichier de sauvegarde miniManda valide"
   }
 }

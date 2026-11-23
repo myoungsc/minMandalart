@@ -85,7 +85,9 @@
     "title": "Compartir",
     "generating": "Creando imagen…",
     "hint": "Se comparte como imagen cuadrada 1:1. Puedes guardarla desde la hoja de compartir.",
-    "button": "Compartir"
+    "button": "Compartir",
+    "style_light": "Claro",
+    "style_dark": "Oscuro"
   },
   "settings": {
     "title": "Ajustes",
@@ -99,7 +101,9 @@
     "reminder_section": "Recordatorio",
     "reminder_enabled": "Recordatorio diario",
     "reminder_time": "Hora del recordatorio",
-    "reminder_denied": "Las notificaciones están desactivadas. Actívalas en los ajustes del dispositivo."
+    "reminder_denied": "Las notificaciones están desactivadas. Actívalas en los ajustes del dispositivo.",
+    "data_section": "Datos",
+    "backup": "Copia de seguridad"
   },
   "about": {
     "title": "Sobre Mandalart",
@@ -115,5 +119,21 @@
   "reminder": {
     "title": "Revisa tus metas de hoy",
     "body": "Abre tu tablero y marca lo que hiciste hoy."
+  },
+  "backup": {
+    "title": "Copia de seguridad",
+    "export": "Exportar",
+    "export_hint": "Guarda todos los tableros, con sus listas, en un solo archivo. Guárdalo en un lugar seguro, como iCloud Drive o Google Drive.",
+    "save": "Guardar en archivo",
+    "save_done": "Copia de seguridad guardada",
+    "share": "Compartir",
+    "import": "Importar",
+    "import_hint": "Elige un archivo de copia de miniManda (.json) para recuperar sus tableros.",
+    "import_merge": "Añadir a mis tableros",
+    "import_replace": "Reemplazar mis tableros",
+    "import_confirm_title": "¿Reemplazar todos los tableros?",
+    "replace_confirm_body": "Se eliminarán todos los tableros actuales y se reemplazarán por los tableros del archivo ({count}). No se puede deshacer.",
+    "import_done": "Tableros importados: {count}",
+    "invalid_file": "No es un archivo de copia válido de miniManda"
   }
 }

@@ -85,7 +85,9 @@
     "title": "Share",
     "generating": "Creating image…",
     "hint": "Shared as a 1:1 square image. You can save it from the share sheet.",
-    "button": "Share"
+    "button": "Share",
+    "style_light": "Light",
+    "style_dark": "Dark"
   },
   "settings": {
     "title": "Settings",
@@ -99,7 +101,9 @@
     "reminder_section": "Reminder",
     "reminder_enabled": "Daily reminder",
     "reminder_time": "Reminder time",
-    "reminder_denied": "Notifications are turned off. Allow them in your device settings."
+    "reminder_denied": "Notifications are turned off. Allow them in your device settings.",
+    "data_section": "Data",
+    "backup": "Backup & restore"
   },
   "about": {
     "title": "About Mandalart",
@@ -115,5 +119,21 @@
   "reminder": {
     "title": "Check today's goals",
     "body": "Take a minute to look at your board and tick off what you did."
+  },
+  "backup": {
+    "title": "Backup & restore",
+    "export": "Export",
+    "export_hint": "Save all boards, including checklists, as one file. Keep it somewhere safe, like iCloud Drive or Google Drive.",
+    "save": "Save to file",
+    "save_done": "Backup file saved",
+    "share": "Share",
+    "import": "Import",
+    "import_hint": "Choose a miniManda backup file (.json) to bring its boards back.",
+    "import_merge": "Add to my boards",
+    "import_replace": "Replace my boards",
+    "import_confirm_title": "Replace all boards?",
+    "replace_confirm_body": "All current boards will be deleted and replaced with the boards in this file ({count}). This can't be undone.",
+    "import_done": "Boards imported: {count}",
+    "invalid_file": "This isn't a valid miniManda backup file"
   }
 }

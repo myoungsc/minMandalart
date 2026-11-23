@@ -7,8 +7,7 @@ import '../core/providers/settings_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/mm_widgets.dart';
 import 'about_mandalart_screen.dart';
-
-const _appVersion = '1.0.0';
+import 'backup_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -30,15 +29,15 @@ class SettingsScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
-            _SectionLabel('settings.theme_section'.tr()),
-            _Group(
+            SettingsSectionLabel('settings.theme_section'.tr()),
+            SettingsGroup(
               children: [
                 for (final (mode, icon, label) in [
                   (ThemeMode.light, Icons.light_mode_rounded, 'settings.theme_light'.tr()),
                   (ThemeMode.dark, Icons.dark_mode_rounded, 'settings.theme_dark'.tr()),
                   (ThemeMode.system, Icons.brightness_auto_rounded, 'settings.theme_system'.tr()),
                 ])
-                  _Row(
+                  SettingsRow(
                     icon: icon,
                     label: label,
                     selected: selected == mode,
@@ -49,10 +48,10 @@ class SettingsScreen extends ConsumerWidget {
             ),
             if (reminderSupported) ...[
               const SizedBox(height: 24),
-              _SectionLabel('settings.reminder_section'.tr()),
-              _Group(
+              SettingsSectionLabel('settings.reminder_section'.tr()),
+              SettingsGroup(
                 children: [
-                  _Row(
+                  SettingsRow(
                     icon: Icons.notifications_rounded,
                     label: 'settings.reminder_enabled'.tr(),
                     toggled: settings.reminderEnabled,
@@ -65,7 +64,7 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  _Row(
+                  SettingsRow(
                     icon: Icons.schedule_rounded,
                     label: 'settings.reminder_time'.tr(),
                     enabled: settings.reminderEnabled,
@@ -79,10 +78,24 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: 24),
-            _SectionLabel('settings.info_section'.tr()),
-            _Group(
+            SettingsSectionLabel('settings.data_section'.tr()),
+            SettingsGroup(
               children: [
-                _Row(
+                SettingsRow(
+                  icon: Icons.save_alt_rounded,
+                  label: 'settings.backup'.tr(),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const BackupScreen()),
+                  ),
+                  trailing: Icon(Icons.chevron_right_rounded, size: 22, color: c.muted),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SettingsSectionLabel('settings.info_section'.tr()),
+            SettingsGroup(
+              children: [
+                SettingsRow(
                   icon: Icons.grid_view_rounded,
                   label: 'settings.about'.tr(),
                   onTap: () => Navigator.of(context).push(
@@ -90,11 +103,12 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   trailing: Icon(Icons.chevron_right_rounded, size: 22, color: c.muted),
                 ),
-                _Row(
+                SettingsRow(
                   icon: Icons.info_rounded,
                   label: 'settings.version'.tr(),
                   trailing: Text(
-                    _appVersion,
+                    // 로딩 중이거나 읽지 못하면 비워 둔다.
+                    ref.watch(appVersionProvider).valueOrNull ?? '',
                     style: TextStyle(fontSize: 15, color: c.muted),
                   ),
                 ),
@@ -134,10 +148,10 @@ Future<void> _report(BuildContext context, Future<ReminderOutcome> action) async
   }
 }
 
-class _SectionLabel extends StatelessWidget {
+class SettingsSectionLabel extends StatelessWidget {
   final String text;
 
-  const _SectionLabel(this.text);
+  const SettingsSectionLabel(this.text, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -155,10 +169,10 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class _Group extends StatelessWidget {
+class SettingsGroup extends StatelessWidget {
   final List<Widget> children;
 
-  const _Group({required this.children});
+  const SettingsGroup({super.key, required this.children});
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +199,7 @@ class _Group extends StatelessWidget {
   }
 }
 
-class _Row extends StatelessWidget {
+class SettingsRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final Widget trailing;
@@ -194,7 +208,8 @@ class _Row extends StatelessWidget {
   final bool enabled;
   final VoidCallback? onTap;
 
-  const _Row({
+  const SettingsRow({
+    super.key,
     required this.icon,
     required this.label,
     required this.trailing,

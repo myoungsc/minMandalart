@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _themeModeKey = 'theme_mode';
@@ -78,4 +79,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
 final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((ref) {
   return SettingsNotifier(ref.watch(sharedPreferencesProvider));
+});
+
+/// 설정 화면에 보여 줄 앱 버전. 예: `1.0.1 (4)`.
+final appVersionProvider = FutureProvider<String>((ref) async {
+  final info = await PackageInfo.fromPlatform();
+  return '${info.version} (${info.buildNumber})';
 });
