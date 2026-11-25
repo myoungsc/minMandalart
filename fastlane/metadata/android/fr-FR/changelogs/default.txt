@@ -1,4 +1,6 @@
-• Ajout de la sauvegarde et restauration (Réglages > Sauvegarde et restauration).
-  - Enregistrez tous vos tableaux dans un fichier ou partagez-le avec une autre app
-  - Chargez une sauvegarde pour l’ajouter à vos tableaux ou pour remplacer vos tableaux
-• Les sauvegardes sont enregistrées uniquement à l’endroit choisi et ne sont jamais envoyées au développeur.
+• Ajout d’un rappel quotidien (Réglages > Rappel).
+  - Recevez une notification « Vos objectifs du jour » par jour, à l’heure de votre choix
+  - L’autorisation des notifications n’est demandée que lorsque vous l’activez
+• Vous pouvez maintenant fixer une échéance à chaque sous-objectif.
+  - Les cases affichent les jours restants et ressortent une fois l’échéance passée
+• En partageant un tableau, vous pouvez choisir une image claire ou sombre.

@@ -1,4 +1,6 @@
-• Added backup & restore (Settings > Backup & restore).
-  - Save all your boards to a file, or share the file with another app
-  - Load a backup file to add it to your boards, or to replace your boards
-• Backup files are saved only where you choose and are never sent to the developer.
+• Added a daily reminder (Settings > Reminder).
+  - Get one "Check today's goals" notification a day at the time you choose
+  - We only ask for notification permission when you turn it on
+• You can now set a due date on each sub-goal.
+  - Cells show the days left and stand out once the date has passed
+• When sharing a board, you can choose a light or dark image.
