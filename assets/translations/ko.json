@@ -45,7 +45,10 @@
     "delete_title": "보드를 삭제할까요?",
     "delete_body": "‘{title}’의 모든 칸과 체크리스트가 함께 삭제되며, 되돌릴 수 없어요.",
     "delete_cta": "삭제",
-    "deleted": "보드를 삭제했어요"
+    "deleted": "보드를 삭제했어요",
+    "days_left": "{days}일 남음",
+    "days_over": "{days}일 지남",
+    "due_today": "오늘 마감"
   },
   "new": {
     "title": "새 만다라트",
@@ -74,7 +77,10 @@
     "clear_title": "이 칸을 비울까요?",
     "clear_body": "제목, 메모, 체크리스트가 모두 지워져요.",
     "clear_cta": "비우기",
-    "cleared": "칸을 비웠어요"
+    "cleared": "칸을 비웠어요",
+    "due_date": "마감일",
+    "due_none": "없음",
+    "due_clear": "마감일 지우기"
   },
   "center": {
     "sheet_label": "핵심 목표 수정",

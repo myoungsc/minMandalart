@@ -10,6 +10,7 @@ import 'package:mandalart/core/backup/backup_codec.dart';
 import 'package:mandalart/core/db/sqlite_helper.dart';
 import 'package:mandalart/core/notifications/reminder_service.dart';
 import 'package:mandalart/core/providers/goal_provider.dart';
+import 'package:mandalart/core/providers/today_provider.dart';
 import 'package:mandalart/core/theme/app_theme.dart';
 import 'package:mandalart/core/widgets/mm_widgets.dart';
 import 'package:mandalart/models/goal_model.dart';
@@ -141,9 +142,15 @@ class _FakeDb implements SQLiteHelper {
         title: '',
         clearDescription: true,
         progress: 0,
+        clearDueDate: true,
         checklistItems: const [],
       ),
     );
+  }
+
+  @override
+  Future<void> setGoalDueDate(int goalId, DateTime? date) async {
+    _replaceGoal(_goal(goalId).copyWith(dueDate: date, clearDueDate: date == null));
   }
 
   @override
@@ -564,6 +571,60 @@ void main() {
 
       await tapAndSettle(tester, find.byType(Switch));
       expect(savedGoal().progress, 0);
+    });
+
+    testWidgets('마감일을 정하면 칸에 남은 일수가 보이고, 지우면 사라진다', (tester) async {
+      await openOldCell(tester);
+
+      await tapAndSettle(tester, find.text('cell.due_date'));
+      await tapAndSettle(tester, find.text('OK'));
+      expect(savedGoal().dueDate, isNotNull);
+      expect(find.text('board.due_today'), findsOneWidget);
+
+      await tapAndSettle(tester, find.byTooltip('cell.due_clear'));
+      expect(savedGoal().dueDate, isNull);
+      expect(find.text('board.due_today'), findsNothing);
+    });
+
+    testWidgets('마감이 지난 칸도 날짜 선택 창이 열린다', (tester) async {
+      final board = _board();
+      await pumpApp(
+        tester,
+        boards: [
+          board.copyWith(
+            subGoals: [
+              board.subGoals.first.copyWith(dueDate: DateTime(2020)),
+              ...board.subGoals.skip(1),
+            ],
+          ),
+        ],
+      );
+      await openBoard(tester);
+      expect(find.text('board.days_over'), findsOneWidget);
+
+      await tapAndSettle(tester, find.text('Old'));
+      await tapAndSettle(tester, find.text('cell.due_date'));
+      expect(find.text('OK'), findsOneWidget);
+    });
+
+    testWidgets('앱이 다시 앞으로 오면 오늘 날짜를 갱신하고, 닫힐 때 타이머를 남기지 않는다', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const TodayRefresher(child: SizedBox()),
+        ),
+      );
+      // 어제로 되돌려 두고 resume을 보내면 오늘로 돌아와야 한다.
+      final today = container.read(todayProvider);
+      // ignore: invalid_use_of_protected_member
+      container.read(todayProvider.notifier).state = today.subtract(const Duration(days: 1));
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+
+      expect(container.read(todayProvider), today);
     });
 
     testWidgets('빈 칸은 제목을 쓰기 전까지 잠겨 있고, 칸 비우기가 없다', (tester) async {

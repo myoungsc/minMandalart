@@ -45,7 +45,10 @@
     "delete_title": "ボードを削除しますか?",
     "delete_body": "「{title}」のすべてのマスとチェックリストが削除され、元に戻せません。",
     "delete_cta": "削除",
-    "deleted": "ボードを削除しました"
+    "deleted": "ボードを削除しました",
+    "days_left": "あと{days}日",
+    "days_over": "{days}日超過",
+    "due_today": "今日まで"
   },
   "new": {
     "title": "新しいマンダラート",
@@ -74,7 +77,10 @@
     "clear_title": "このマスをクリアしますか?",
     "clear_body": "タイトル、メモ、チェックリストがすべて消去されます。",
     "clear_cta": "クリア",
-    "cleared": "マスをクリアしました"
+    "cleared": "マスをクリアしました",
+    "due_date": "期限",
+    "due_none": "なし",
+    "due_clear": "期限を削除"
   },
   "center": {
     "sheet_label": "中心目標を編集",

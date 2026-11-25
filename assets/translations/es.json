@@ -45,7 +45,10 @@
     "delete_title": "¿Eliminar este tablero?",
     "delete_body": "Se eliminarán todas las casillas y listas de «{title}». No se puede deshacer.",
     "delete_cta": "Eliminar",
-    "deleted": "Tablero eliminado"
+    "deleted": "Tablero eliminado",
+    "days_left": "Faltan {days} d",
+    "days_over": "Retraso: {days} d",
+    "due_today": "Vence hoy"
   },
   "new": {
     "title": "Nuevo Mandalart",
@@ -74,7 +77,10 @@
     "clear_title": "¿Vaciar esta casilla?",
     "clear_body": "Se borrarán el título, la nota y la lista.",
     "clear_cta": "Vaciar",
-    "cleared": "Casilla vaciada"
+    "cleared": "Casilla vaciada",
+    "due_date": "Fecha límite",
+    "due_none": "Sin fecha",
+    "due_clear": "Quitar fecha límite"
   },
   "center": {
     "sheet_label": "Editar objetivo central",

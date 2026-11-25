@@ -480,6 +480,79 @@ void main() {
       expect(cleared.checklistItems, isEmpty);
     });
 
+    test('마감일은 날짜만 저장되고, 지우기와 칸 비우기로 없어진다', () async {
+      await helper.setGoalDueDate(goal.id!, DateTime(2026, 12, 25, 13, 30));
+      expect((await reload()).dueDate, DateTime(2026, 12, 25));
+
+      await helper.setGoalDueDate(goal.id!, null);
+      expect((await reload()).dueDate, isNull);
+
+      await helper.setGoalDueDate(goal.id!, DateTime(2026, 12, 25));
+      await helper.clearGoal(goal.id!);
+      expect((await reload()).dueDate, isNull);
+    });
+
+    test('v3 DB를 v4로 올리면 기존 목표가 유지되고 마감일을 쓸 수 있다', () async {
+      final dir = await Directory.systemTemp.createTemp('mandalart');
+      addTearDown(() => dir.delete(recursive: true));
+      final path = '${dir.path}/upgrade.db';
+
+      final v3 = await databaseFactoryFfi.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 3,
+          onCreate: (db, _) async {
+            await db.execute(
+              'CREATE TABLE mandalart_boards (id INTEGER PRIMARY KEY AUTOINCREMENT, center_goal TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT)',
+            );
+            await db.execute(
+              'CREATE TABLE goals (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, parent_id INTEGER NOT NULL, position INTEGER NOT NULL, is_completed INTEGER NOT NULL, progress INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT, FOREIGN KEY (parent_id) REFERENCES mandalart_boards (id) ON DELETE CASCADE)',
+            );
+            await db.execute(
+              'CREATE TABLE checklist_items (id INTEGER PRIMARY KEY AUTOINCREMENT, goal_id INTEGER NOT NULL, title TEXT NOT NULL, is_done INTEGER NOT NULL DEFAULT 0, position INTEGER NOT NULL, created_at TEXT NOT NULL, FOREIGN KEY (goal_id) REFERENCES goals (id) ON DELETE CASCADE)',
+            );
+            await db.insert('mandalart_boards', {
+              'id': 1,
+              'center_goal': '보드',
+              'created_at': '2026-01-01T00:00:00.000',
+            });
+            await db.insert('goals', {
+              'id': 1,
+              'title': '기존 목표',
+              'parent_id': 1,
+              'position': 0,
+              'is_completed': 0,
+              'progress': 40,
+              'created_at': '2026-01-01T00:00:00.000',
+            });
+            await db.insert('checklist_items', {
+              'goal_id': 1,
+              'title': '기존 항목',
+              'position': 0,
+              'created_at': '2026-01-01T00:00:00.000',
+            });
+          },
+        ),
+      );
+      await v3.close();
+
+      final v4 = await databaseFactoryFfi.openDatabase(
+        path,
+        options: OpenDatabaseOptions(version: 4, onUpgrade: SQLiteHelper.upgrade),
+      );
+      addTearDown(v4.close);
+
+      expect(await v4.getVersion(), 4);
+      final goal = Goal.fromMap((await v4.query('goals')).single);
+      expect(goal.title, '기존 목표');
+      expect(goal.progress, 40);
+      expect(goal.dueDate, isNull);
+      expect((await v4.query('checklist_items')).single['title'], '기존 항목');
+
+      await v4.update('goals', {'due_date': '2026-12-25T00:00:00.000'});
+      expect(Goal.fromMap((await v4.query('goals')).single).dueDate, DateTime(2026, 12, 25));
+    });
+
     test('보드를 삭제하면 항목도 함께 삭제된다', () async {
       final itemId = await helper.addChecklistItem(goal.id!, 'A');
 

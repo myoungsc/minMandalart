@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/notifications/reminder_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/settings_provider.dart';
+import 'core/providers/today_provider.dart';
 import 'core/widgets/mm_widgets.dart';
 import 'screens/home_screen.dart';
 
@@ -51,8 +52,10 @@ class MyApp extends ConsumerWidget {
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
-      builder: (context, child) =>
-          _ReminderResync(child: dismissKeyboardOnTap(context, child)),
+      // dismissKeyboardOnTap은 그대로 두고, 날짜가 바뀌면 남은 일수가 갱신되게 감싼다.
+      builder: (context, child) => TodayRefresher(
+        child: _ReminderResync(child: dismissKeyboardOnTap(context, child)),
+      ),
       home: const HomeScreen(),
     );
   }

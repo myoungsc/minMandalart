@@ -208,19 +208,31 @@ flutter pub get
 **선행 조건:** DB 버전이 3.
 
 ### 구현
-- `goal_model.dart`: `Goal.dueDate`(`DateTime?`), `copyWith`에 `clearDueDate`. `int? daysLeft({DateTime? now})` — 시간은 버리고 날짜만 비교.
-- `sqlite_helper.dart`: 버전 **4**. `upgrade()`에 `if (oldVersion < 4) ALTER TABLE goals ADD COLUMN due_date TEXT`, `_createDB`의 goals에도 추가. `Future<void> setGoalDueDate(int goalId, DateTime? date)`. `clearGoal`은 `due_date`도 null로.
-- `goal_provider.dart`: `CurrentBoardNotifier.setGoalDueDate`.
-- `cell_sheets.dart`: 메모 아래에 "마감일" 행. 누르면 `showDatePicker`(오늘~5년 뒤), 값이 있으면 지우기 버튼. 제목이 비어 있으면 완료 토글처럼 잠근다. 날짜 표시는 `DateFormat.yMMMd(context.locale.toLanguageTag())`.
-- `board_screen.dart` `BoardCell`: 마감일이 있고 완료가 아니면 상태 줄에 `board.days_left`/`board.due_today`/`board.days_over`. 지난 경우 경고색 — `MmColors`에 `warn`이 없으면 라이트·다크 값을 추가한다(배경 대비 4.5:1 이상).
-- 공유 이미지(`ShareCard`)에는 넣지 않는다.
-- 2단계가 이미 병합돼 있으면 `restoreGoal`이 `due_date`도 되돌리게 한다.
+- `goal_model.dart`: `Goal.dueDate`(`DateTime?`), `toMap`/`fromMap`의 키는 `due_date`(ISO8601 문자열, 키가 없거나 null이면 null), `copyWith`에 `dueDate`와 `clearDueDate`.
+  - 저장하는 값은 항상 시간 없는 로컬 날짜 `DateTime(y, m, d)`로 맞춘다.
+  - `int? daysLeft({DateTime? now})`: 마감일이 없으면 null. **`DateTime.utc(y, m, d)` 두 개의 차이로 계산한다.** 로컬 자정끼리 `difference().inDays`를 쓰면 서머타임이 시작하는 날(하루가 23시간)에 내일이 0일로 나온다(America/New_York에서 확인함).
+- `sqlite_helper.dart`: 버전 **4**. `upgrade()`에 `if (oldVersion < 4) ALTER TABLE goals ADD COLUMN due_date TEXT`, `_createDB`의 goals에도 추가. `Future<void> setGoalDueDate(int goalId, DateTime? date)`(`updated_at`도 갱신). `clearGoal`은 `due_date`도 null로.
+- `goal_provider.dart`: `CurrentBoardNotifier.setGoalDueDate`(`_writeAndRefresh` 사용).
+- `cell_sheets.dart`: "마감일" 행을 **잠금 영역(`Opacity`/`IgnorePointer` 안의 `Column`) 맨 위**, 완료 토글 앞에 둔다. 그러면 제목이 비었을 때 기존 잠금이 그대로 적용된다.
+  - 누르면 `_toggleDone`처럼 `await _flush()` 후 `showDatePicker`, 결과는 `_guard(_notifier.setGoalDueDate(...))`로 저장. `await` 뒤 `mounted` 확인.
+  - `showDatePicker` 범위: `firstDate`는 오늘과 기존 마감일 중 **이른 날**, `lastDate`는 오늘+5년과 기존 마감일 중 늦은 날, `initialDate`는 기존 마감일(없으면 오늘). 마감이 지난 칸은 `initialDate`가 오늘보다 앞이라, `firstDate`를 오늘로 고정하면 `showDatePicker`의 assert로 죽는다.
+  - 값이 있으면 지우기 버튼(`cell.due_clear` 툴팁, 44×44).
+  - 날짜 표시는 `MaterialLocalizations.of(context).formatShortDate(date)`(yMMMd와 같은 모양, 앱 언어를 따른다). **`context.locale`은 쓰지 않는다.** `app_flow_test.dart`의 `pumpApp`에는 `EasyLocalization`이 없어 `context.locale`이 예외를 낸다.
+- `board_screen.dart` `BoardCell`: 마감일이 있고 완료가 아니면 상태 줄에 `board.days_left`/`board.due_today`/`board.days_over`.
+  - **줄을 새로 더하지 않는다.** 칸이 작아(폰에서 한 변 100px 안팎) 줄이 늘면 제목이 3줄에서 2줄로 줄고, `cell.title_helper`("칸에는 3줄까지 보여요")와 어긋난다. `todo`는 "진행 전" 문구 자리를 마감 문구로 바꾸고, `inProgress`는 `%` 옆 같은 `Row`에 12pt로 붙인다(기존 `FittedBox(scaleDown)` 안). 폭 360 화면에서 제목 3줄이 유지되는지 확인한다.
+  - 지난 경우 글자색은 **기존 `c.error`** 를 쓴다. `MmColors`에 새 색을 추가하지 않는다. 대비는 계산해 확인했다: 라이트 6.54(surface)·5.11(accentSoft), 다크 9.78·6.05.
+  - `_CellPress`가 `excludeSemantics: true`라 화면의 글자는 스크린 리더에 읽히지 않는다. `_semanticLabel()`에 마감 문구를 덧붙인다.
+- 공유 이미지(`ShareCard`)와 홈 `MiniBoard`에는 넣지 않는다.
+- 2단계가 이미 병합돼 있으면 `restoreGoal`이 `due_date`도 되돌리게 한다. 1단계가 병합돼 있으면 `importBoards`가 `Goal.toMap()`을 쓰므로 `due_date`가 자동으로 포함되는지 백업 왕복 테스트에 한 줄 더한다.
 - 번역 키: `cell.due_date`, `cell.due_none`, `cell.due_clear`, `board.days_left`({days}), `board.days_over`({days}), `board.due_today`.
+  - 문구는 짧고 **복수형이 필요 없는 형태**로 쓴다(예: ko `{days}일 남음`, en `{days}d left` / `{days}d late`). easy_localization의 복수형 맵(`one`/`other`)은 쓰지 않는다. 러시아어만 `few`/`many` 키가 더 생겨 `test/translations_test.dart`의 "키가 영어와 같다" 검사가 깨진다.
 
 ### 테스트
-- 모델: 직렬화 왕복, `due_date` 키가 없는 map도 읽힘, `daysLeft` 경계(오늘 0, 내일 1, 어제 -1).
-- DB: 3 → 4 마이그레이션 후 기존 데이터 유지.
-- 화면: 날짜를 정하면 칸에 남은 일수 문구가 보인다.
+- 위젯 테스트 환경에는 번역이 로드되지 않아 `.tr()`이 키 문자열 그대로 나온다. 화면 테스트는 `find.text('board.due_today')`처럼 키로 찾는다.
+- 모델: 직렬화 왕복, `due_date` 키가 없는 map도 읽힘, `daysLeft` 경계(오늘 0, 내일 1, 어제 -1, `now`가 23시여도 내일은 1).
+- DB: 3 → 4 마이그레이션 후 기존 데이터 유지. 기존 "v1 → v3" 테스트 방식(임시 파일 DB)을 따르되, `_createDB`는 이제 v4 스키마를 만들므로 **v3 스키마는 테스트의 `onCreate`에 SQL로 직접 쓴다.** 그 뒤 `version: 4, onUpgrade: SQLiteHelper.upgrade`로 다시 열어 기존 goal 유지, `due_date`가 null, 값 쓰기를 확인한다. `setGoalDueDate`와 `clearGoal`은 싱글톤 `SQLiteHelper.instance`로 테스트한다(기존 CRUD 그룹 방식).
+- 화면: 제목 입력 → `cell.due_date` 행 → 날짜 선택 창의 `OK` → 칸에 `board.due_today`가 보인다. 지우기를 누르면 사라진다.
+- `_FakeDb`에 `setGoalDueDate`를 구현하고 `clearGoal`도 `clearDueDate`를 하게 한다. `_FakeDb`에는 `noSuchMethod`가 있어 구현을 빠뜨려도 **컴파일은 되고 실행 중에 `NoSuchMethodError`** 가 난다(공통 규칙의 "컴파일된다"는 설명과 다르다).
 
 ## 4단계. 완료 날짜 기록, 홈 요약 (`feat/completed-at`)
 

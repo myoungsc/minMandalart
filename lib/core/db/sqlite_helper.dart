@@ -20,7 +20,7 @@ class SQLiteHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       // SQLite는 연결마다 외래 키가 꺼져 있어 켜야 ON DELETE CASCADE가 동작함
       onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: _createDB,
@@ -31,6 +31,7 @@ class SQLiteHelper {
   static Future<void> upgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) await migrateToV2(db);
     if (oldVersion < 3) await _createChecklistTable(db);
+    if (oldVersion < 4) await db.execute('ALTER TABLE goals ADD COLUMN due_date TEXT');
   }
 
   static Future<void> _createChecklistTable(DatabaseExecutor db) async {
@@ -95,6 +96,7 @@ class SQLiteHelper {
         progress $intType,
         created_at $textType,
         updated_at $textTypeNullable,
+        due_date $textTypeNullable,
         FOREIGN KEY (parent_id) REFERENCES mandalart_boards (id) ON DELETE CASCADE
       )
     ''');
@@ -333,12 +335,27 @@ class SQLiteHelper {
           'title': '',
           'description': null,
           'progress': 0,
+          'due_date': null,
           'updated_at': DateTime.now().toIso8601String(),
         },
         where: 'id = ?',
         whereArgs: [goalId],
       );
     });
+  }
+
+  /// 마감일은 시간 없이 날짜만 저장한다. null이면 지운다.
+  Future<void> setGoalDueDate(int goalId, DateTime? date) async {
+    final db = await database;
+    await db.update(
+      'goals',
+      {
+        'due_date': date == null ? null : dateOnly(date).toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [goalId],
+    );
   }
 
   /// 체크리스트가 없는 칸만 완료 표시할 수 있다. 있으면 진행률은 항목으로 계산된다.
