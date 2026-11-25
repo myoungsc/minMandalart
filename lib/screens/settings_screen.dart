@@ -2,12 +2,12 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/notifications/reminder_service.dart';
 import '../core/providers/settings_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/mm_widgets.dart';
 import 'about_mandalart_screen.dart';
-
-const _appVersion = '1.0.0';
+import 'backup_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -15,7 +15,8 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mm;
-    final selected = ref.watch(settingsProvider).themeMode;
+    final settings = ref.watch(settingsProvider);
+    final selected = settings.themeMode;
     final notifier = ref.read(settingsProvider.notifier);
     return Scaffold(
       appBar: AppBar(
@@ -28,15 +29,15 @@ class SettingsScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
-            _SectionLabel('settings.theme_section'.tr()),
-            _Group(
+            SettingsSectionLabel('settings.theme_section'.tr()),
+            SettingsGroup(
               children: [
                 for (final (mode, icon, label) in [
                   (ThemeMode.light, Icons.light_mode_rounded, 'settings.theme_light'.tr()),
                   (ThemeMode.dark, Icons.dark_mode_rounded, 'settings.theme_dark'.tr()),
                   (ThemeMode.system, Icons.brightness_auto_rounded, 'settings.theme_system'.tr()),
                 ])
-                  _Row(
+                  SettingsRow(
                     icon: icon,
                     label: label,
                     selected: selected == mode,
@@ -45,11 +46,56 @@ class SettingsScreen extends ConsumerWidget {
                   ),
               ],
             ),
+            if (reminderSupported) ...[
+              const SizedBox(height: 24),
+              SettingsSectionLabel('settings.reminder_section'.tr()),
+              SettingsGroup(
+                children: [
+                  SettingsRow(
+                    icon: Icons.notifications_rounded,
+                    label: 'settings.reminder_enabled'.tr(),
+                    toggled: settings.reminderEnabled,
+                    onTap: () => _setReminderEnabled(context, ref, !settings.reminderEnabled),
+                    // 행 전체가 스위치 역할을 하므로 스위치 자체는 스크린리더에서 뺀다.
+                    trailing: ExcludeSemantics(
+                      child: Switch(
+                        value: settings.reminderEnabled,
+                        onChanged: (on) => _setReminderEnabled(context, ref, on),
+                      ),
+                    ),
+                  ),
+                  SettingsRow(
+                    icon: Icons.schedule_rounded,
+                    label: 'settings.reminder_time'.tr(),
+                    enabled: settings.reminderEnabled,
+                    onTap: () => _pickReminderTime(context, ref),
+                    trailing: Text(
+                      settings.reminderTime.format(context),
+                      style: TextStyle(fontSize: 15, color: c.muted),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 24),
-            _SectionLabel('settings.info_section'.tr()),
-            _Group(
+            SettingsSectionLabel('settings.data_section'.tr()),
+            SettingsGroup(
               children: [
-                _Row(
+                SettingsRow(
+                  icon: Icons.save_alt_rounded,
+                  label: 'settings.backup'.tr(),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const BackupScreen()),
+                  ),
+                  trailing: Icon(Icons.chevron_right_rounded, size: 22, color: c.muted),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SettingsSectionLabel('settings.info_section'.tr()),
+            SettingsGroup(
+              children: [
+                SettingsRow(
                   icon: Icons.grid_view_rounded,
                   label: 'settings.about'.tr(),
                   onTap: () => Navigator.of(context).push(
@@ -57,11 +103,12 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   trailing: Icon(Icons.chevron_right_rounded, size: 22, color: c.muted),
                 ),
-                _Row(
+                SettingsRow(
                   icon: Icons.info_rounded,
                   label: 'settings.version'.tr(),
                   trailing: Text(
-                    _appVersion,
+                    // 로딩 중이거나 읽지 못하면 비워 둔다.
+                    ref.watch(appVersionProvider).valueOrNull ?? '',
                     style: TextStyle(fontSize: 15, color: c.muted),
                   ),
                 ),
@@ -74,10 +121,37 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-class _SectionLabel extends StatelessWidget {
+Future<void> _setReminderEnabled(BuildContext context, WidgetRef ref, bool on) =>
+    _report(context, ref.read(reminderControllerProvider.notifier).setEnabled(on));
+
+Future<void> _pickReminderTime(BuildContext context, WidgetRef ref) async {
+  final controller = ref.read(reminderControllerProvider.notifier);
+  final picked = await showTimePicker(
+    context: context,
+    initialTime: ref.read(settingsProvider).reminderTime,
+  );
+  if (picked == null || !context.mounted) return;
+  await _report(context, controller.setTime(picked));
+}
+
+/// 알림 처리 결과에 맞는 안내를 띄운다.
+Future<void> _report(BuildContext context, Future<ReminderOutcome> action) async {
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    if (await action == ReminderOutcome.denied && context.mounted) {
+      showMmSnack(messenger, context, 'settings.reminder_denied'.tr());
+    }
+  } catch (e) {
+    if (context.mounted) {
+      showMmSnack(messenger, context, 'common.error'.tr(namedArgs: {'error': '$e'}));
+    }
+  }
+}
+
+class SettingsSectionLabel extends StatelessWidget {
   final String text;
 
-  const _SectionLabel(this.text);
+  const SettingsSectionLabel(this.text, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -95,10 +169,10 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class _Group extends StatelessWidget {
+class SettingsGroup extends StatelessWidget {
   final List<Widget> children;
 
-  const _Group({required this.children});
+  const SettingsGroup({super.key, required this.children});
 
   @override
   Widget build(BuildContext context) {
@@ -125,30 +199,37 @@ class _Group extends StatelessWidget {
   }
 }
 
-class _Row extends StatelessWidget {
+class SettingsRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final Widget trailing;
   final bool? selected;
+  final bool? toggled;
+  final bool enabled;
   final VoidCallback? onTap;
 
-  const _Row({
+  const SettingsRow({
+    super.key,
     required this.icon,
     required this.label,
     required this.trailing,
     this.selected,
+    this.toggled,
+    this.enabled = true,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
+    final row = Semantics(
       // 행마다 별도 요소로 둔다. 합쳐지면 스크린리더가 행을 구분해 누를 수 없다.
       container: true,
       inMutuallyExclusiveGroup: selected != null,
       checked: selected,
+      toggled: toggled,
+      enabled: enabled ? null : false,
       child: InkWell(
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 56),
           child: Padding(
@@ -175,6 +256,7 @@ class _Row extends StatelessWidget {
         ),
       ),
     );
+    return enabled ? row : Opacity(opacity: 0.4, child: row);
   }
 }
 

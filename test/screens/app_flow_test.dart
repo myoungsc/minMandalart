@@ -1,18 +1,57 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mandalart/core/ads/ads.dart';
+import 'package:mandalart/core/backup/backup_codec.dart';
 import 'package:mandalart/core/db/sqlite_helper.dart';
+import 'package:mandalart/core/notifications/reminder_service.dart';
 import 'package:mandalart/core/providers/goal_provider.dart';
 import 'package:mandalart/core/providers/today_provider.dart';
 import 'package:mandalart/core/theme/app_theme.dart';
 import 'package:mandalart/core/widgets/mm_widgets.dart';
 import 'package:mandalart/models/goal_model.dart';
+import 'package:mandalart/screens/backup_screen.dart';
 import 'package:mandalart/screens/home_screen.dart';
 import 'package:mandalart/screens/settings_screen.dart';
+import 'package:mandalart/screens/share_screen.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
+/// 실제 알림을 걸지 않고 호출만 센다.
+class _FakeReminder implements ReminderService {
+  bool grant = true;
+  int permissionRequests = 0;
+  final scheduled = <TimeOfDay>[];
+  int cancels = 0;
+
+  @override
+  Future<void> init() async {}
+
+  @override
+  Future<bool> requestPermission() async {
+    permissionRequests++;
+    return grant;
+  }
+
+  @override
+  Future<bool> hasPermission() async => grant;
+
+  @override
+  Future<void> schedule(
+    TimeOfDay time, {
+    required String title,
+    required String body,
+    required String channelName,
+  }) async {
+    scheduled.add(time);
+  }
+
+  @override
+  Future<void> cancel() async => cancels++;
+}
 
 /// 메모리에서 SQLiteHelper와 같은 규칙으로 동작하는 가짜 DB.
 class _FakeDb implements SQLiteHelper {
@@ -170,6 +209,29 @@ class _FakeDb implements SQLiteHelper {
   }
 
   @override
+  Future<List<MandalartBoard>> readAllBoardsFull() async => [...boards];
+
+  @override
+  Future<List<int>> importBoards(List<MandalartBoard> boards, {required bool replace}) async {
+    if (replace) this.boards.clear();
+    final ids = <int>[];
+    for (final board in boards) {
+      final boardId = _nextId++;
+      ids.add(boardId);
+      this.boards.add(
+        board.copyWith(
+          id: boardId,
+          subGoals: [
+            for (final goal in board.subGoals)
+              goal.copyWith(id: _nextId++, parentId: boardId),
+          ],
+        ),
+      );
+    }
+    return ids;
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -204,6 +266,7 @@ MandalartBoard _board({
 
 void main() {
   late _FakeDb db;
+  late _FakeReminder reminder;
 
   Future<void> pumpApp(
     WidgetTester tester, {
@@ -216,10 +279,12 @@ void main() {
     addTearDown(tester.view.reset);
 
     db = _FakeDb()..boards.addAll(boards);
+    reminder = _FakeReminder();
     final container = ProviderContainer(
       overrides: [
         databaseProvider.overrideWithValue(db),
         adsEnabledProvider.overrideWithValue(false),
+        reminderServiceProvider.overrideWithValue(reminder),
       ],
     );
     addTearDown(container.dispose);
@@ -650,30 +715,51 @@ void main() {
   });
 
   group('공유', () {
-    testWidgets('화면 전환 뒤 1080×1080 이미지를 만들고 공유 버튼이 켜진다', (tester) async {
-      final dir = await tester.runAsync(() => Directory.systemTemp.createTemp('share'));
-      addTearDown(() => dir!.deleteSync(recursive: true));
+    /// 이미지가 저장될 임시 폴더를 만들고 path_provider가 그 경로를 돌려주게 한다.
+    Future<Directory> mockTempDir(WidgetTester tester) async {
+      final dir = (await tester.runAsync(() => Directory.systemTemp.createTemp('share')))!;
+      addTearDown(() => dir.deleteSync(recursive: true));
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         const MethodChannel('plugins.flutter.io/path_provider'),
-        (_) async => dir!.path,
+        (_) async => dir.path,
       );
+      return dir;
+    }
 
-      await pumpApp(tester, boards: [_board()]);
-      await openBoard(tester);
-      await tester.tap(find.text('board.share'));
-
-      // 앱 쪽은 가상 시간, 이미지 생성은 실제 시간이 필요해 번갈아 진행한다.
-      // 전환 첫 프레임에 캡처하면 그려지지 않은 화면이라 실패한다.
+    /// 앱 쪽은 가상 시간, 이미지 생성은 실제 시간이 필요해 번갈아 진행한다.
+    /// 전환 첫 프레임에 캡처하면 그려지지 않은 화면이라 실패한다.
+    /// 파일이 생기고 공유 버튼이 켜질 때(화면이 생성 완료를 알았을 때)까지 기다린다.
+    Future<File?> waitForImage(WidgetTester tester, Directory dir) async {
       File? image;
-      for (int i = 0; i < 100 && image == null; i++) {
+      bool ready() =>
+          image != null &&
+          tester
+                  .widget<PrimaryButton>(
+                    find.descendant(of: find.byType(ShareScreen), matching: find.byType(PrimaryButton)),
+                  )
+                  .onTap !=
+              null;
+      for (int i = 0; i < 100 && !ready(); i++) {
         await tester.pump(const Duration(milliseconds: 50));
         await tester.runAsync(() async {
           await Future.delayed(const Duration(milliseconds: 20));
-          final files = dir!.listSync().whereType<File>();
+          final files = dir.listSync().whereType<File>();
           if (files.isNotEmpty && files.first.lengthSync() > 0) image = files.first;
         });
       }
       await tester.pump(const Duration(milliseconds: 100));
+      return image;
+    }
+
+    ShareCard shareCard(WidgetTester tester) => tester.widget<ShareCard>(find.byType(ShareCard));
+
+    testWidgets('화면 전환 뒤 1080×1080 이미지를 만들고 공유 버튼이 켜진다', (tester) async {
+      final dir = await mockTempDir(tester);
+
+      await pumpApp(tester, boards: [_board()]);
+      await openBoard(tester);
+      await tester.tap(find.text('board.share'));
+      final image = await waitForImage(tester, dir);
 
       expect(find.textContaining('common.error'), findsNothing);
       expect(image, isNotNull, reason: '이미지 파일이 만들어져야 한다');
@@ -681,6 +767,49 @@ void main() {
       final data = ByteData.sublistView(bytes!);
       expect(data.getUint32(16), 1080, reason: 'PNG 폭');
       expect(data.getUint32(20), 1080, reason: 'PNG 높이');
+      // 라이트 테마에서는 밝은 이미지가 기본이다.
+      expect(shareCard(tester).colors, MmColors.light);
+    });
+
+    testWidgets('어둡게를 고르면 어두운 팔레트로 다시 만든다', (tester) async {
+      final dir = await mockTempDir(tester);
+
+      await pumpApp(tester, boards: [_board()]);
+      await openBoard(tester);
+      await tester.tap(find.text('board.share'));
+      expect(await waitForImage(tester, dir), isNotNull);
+
+      // 이전 파일이 남아 있으면 다시 그려지기 전에 대기가 끝나므로 지워 두고 새 파일을 기다린다.
+      await tester.runAsync(() async {
+        for (final f in dir.listSync()) {
+          f.deleteSync();
+        }
+      });
+      await tester.tap(find.text('share.style_dark'));
+      expect(await waitForImage(tester, dir), isNotNull);
+
+      expect(find.textContaining('common.error'), findsNothing);
+      expect(shareCard(tester).colors, MmColors.dark);
+      final background = tester.widget<Container>(
+        find.descendant(of: find.byType(ShareCard), matching: find.byType(Container)).first,
+      );
+      expect((background.decoration! as BoxDecoration).color, MmColors.dark.bg);
+      // 진행 중 칸 글자는 어두운 배경에서도 보이게 ink 색이어야 한다.
+      final cellTitle = tester.widget<Text>(
+        find.descendant(of: find.byType(ShareCard), matching: find.text('Old')),
+      );
+      expect(cellTitle.style!.color, MmColors.dark.ink);
+    });
+
+    testWidgets('다크 테마에서는 어두운 이미지가 기본이다', (tester) async {
+      final dir = await mockTempDir(tester);
+
+      await pumpApp(tester, boards: [_board()], theme: ThemeMode.dark);
+      await openBoard(tester);
+      await tester.tap(find.text('board.share'));
+      expect(await waitForImage(tester, dir), isNotNull);
+
+      expect(shareCard(tester).colors, MmColors.dark);
     });
   });
 
@@ -695,6 +824,20 @@ void main() {
       semantics.dispose();
     });
 
+    testWidgets('앱 버전을 패키지 정보에서 읽어 보여 준다', (tester) async {
+      PackageInfo.setMockInitialValues(
+        appName: 'miniManda',
+        packageName: 'test',
+        version: '1.2.3',
+        buildNumber: '9',
+        buildSignature: '',
+      );
+      await pumpApp(tester);
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+
+      expect(find.text('1.2.3 (9)'), findsOneWidget);
+    });
+
     testWidgets('테마를 고르면 바로 적용된다', (tester) async {
       await pumpApp(tester);
       await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
@@ -706,6 +849,135 @@ void main() {
 
       await tapAndSettle(tester, find.text('settings.about'));
       expect(find.text('about.heading'), findsOneWidget);
+    });
+
+    Finder reminderSwitch() => find.byType(Switch);
+    bool switchOn(WidgetTester tester) => tester.widget<Switch>(reminderSwitch()).value;
+
+    testWidgets('알림을 켜면 권한을 묻고 한 번 예약하고, 끄면 한 번 취소한다', (tester) async {
+      await pumpApp(tester);
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+      expect(switchOn(tester), isFalse);
+      expect(reminder.permissionRequests, 0);
+
+      await tapAndSettle(tester, reminderSwitch());
+      expect(switchOn(tester), isTrue);
+      expect(reminder.permissionRequests, 1);
+      expect(reminder.scheduled, [const TimeOfDay(hour: 21, minute: 0)]);
+      expect(reminder.cancels, 0);
+
+      // 끌 때는 권한을 다시 묻지 않는다.
+      await tapAndSettle(tester, find.text('settings.reminder_enabled'));
+      expect(switchOn(tester), isFalse);
+      expect(reminder.permissionRequests, 1);
+      expect(reminder.scheduled, hasLength(1));
+      expect(reminder.cancels, 1);
+    });
+
+    testWidgets('권한을 거부하면 스위치가 꺼진 채로 남고 안내가 뜬다', (tester) async {
+      await pumpApp(tester);
+      reminder.grant = false;
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+
+      await tapAndSettle(tester, reminderSwitch());
+      expect(switchOn(tester), isFalse);
+      expect(find.text('settings.reminder_denied'), findsOneWidget);
+      expect(reminder.scheduled, isEmpty);
+    });
+
+    testWidgets('알림 시각은 켜져 있을 때만 고를 수 있고 바꾸면 다시 예약한다', (tester) async {
+      await pumpApp(tester);
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+
+      await tapAndSettle(tester, find.text('settings.reminder_time'));
+      expect(find.byType(TimePickerDialog), findsNothing);
+
+      await tapAndSettle(tester, reminderSwitch());
+      await tapAndSettle(tester, find.text('settings.reminder_time'));
+      expect(find.byType(TimePickerDialog), findsOneWidget);
+
+      // 기본 21:00(오후 9시)에서 오전으로 바꾸면 09:00이 된다.
+      await tapAndSettle(tester, find.text('AM'));
+      await tapAndSettle(tester, find.text('OK'));
+      expect(reminder.scheduled.last, const TimeOfDay(hour: 9, minute: 0));
+      expect(reminder.scheduled, hasLength(2));
+    });
+
+    testWidgets('휴대폰이 아닌 플랫폼에서는 알림 설정을 보여 주지 않는다', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+      try {
+        await pumpApp(tester);
+        await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+        expect(find.text('settings.reminder_section'), findsNothing);
+        expect(find.text('settings.theme_section'), findsOneWidget);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('백업 화면에 들어가고, 보드가 없으면 내보내기가 꺼진다', (tester) async {
+      await pumpApp(tester);
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+      await tapAndSettle(tester, find.text('settings.backup'));
+
+      expect(find.byType(BackupScreen), findsOneWidget);
+      SettingsRow rowOf(String label) => tester.widget<SettingsRow>(
+            find.ancestor(of: find.text(label), matching: find.byType(SettingsRow)),
+          );
+      expect(rowOf('backup.save').onTap, isNull);
+      expect(rowOf('backup.share').onTap, isNull);
+      expect(rowOf('backup.import_merge').onTap, isNotNull);
+      expect(rowOf('backup.import_replace').onTap, isNotNull);
+    });
+
+    testWidgets('보드가 있으면 내보내기를 누를 수 있다', (tester) async {
+      await pumpApp(tester, boards: [_board()]);
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+      await tapAndSettle(tester, find.text('settings.backup'));
+
+      final save = tester.widget<SettingsRow>(
+        find.ancestor(of: find.text('backup.save'), matching: find.byType(SettingsRow)),
+      );
+      expect(save.onTap, isNotNull);
+    });
+  });
+
+  group('백업 provider', () {
+    late ProviderContainer container;
+
+    setUp(() {
+      db = _FakeDb()..boards.add(_board());
+      container = ProviderContainer(
+        overrides: [databaseProvider.overrideWithValue(db)],
+      );
+    });
+
+    tearDown(() => container.dispose());
+
+    Future<MandalartBoardsNotifier> loaded() async {
+      final notifier = container.read(mandalartBoardsProvider.notifier);
+      await notifier.loadBoards();
+      return notifier;
+    }
+
+    test('내보낸 JSON을 추가로 불러오면 보드가 늘고, 교체하면 파일 내용만 남는다', () async {
+      final notifier = await loaded();
+      final imported = decodeBackup(await notifier.exportJson());
+
+      await notifier.importBoards(imported, replace: false);
+      expect(container.read(mandalartBoardsProvider).value, hasLength(2));
+
+      final current = container.read(currentBoardProvider.notifier);
+      await current.loadBoard(container.read(mandalartBoardsProvider).value!.first.id!);
+      expect(container.read(currentBoardProvider), isNotNull);
+
+      await notifier.importBoards(imported, replace: true);
+      // 열려 있던 보드는 지워졌으므로 비운다.
+      expect(container.read(currentBoardProvider), isNull);
+      final boards = container.read(mandalartBoardsProvider).value!;
+      expect(boards, hasLength(1));
+      expect(boards.single.centerGoal, 'Center');
+      expect(boards.single.subGoals.first.title, 'Old');
     });
   });
 

@@ -179,6 +179,60 @@ class SQLiteHelper {
     return boards;
   }
 
+  /// 백업용: 모든 보드를 체크리스트까지 읽는다.
+  Future<List<MandalartBoard>> readAllBoardsFull() async {
+    final db = await database;
+    final rows = await db.query(
+      'mandalart_boards',
+      columns: ['id'],
+      orderBy: 'created_at DESC',
+    );
+    final boards = <MandalartBoard>[];
+    for (final row in rows) {
+      final board = await readMandalartBoard(row['id'] as int);
+      if (board != null) boards.add(board);
+    }
+    return boards;
+  }
+
+  /// 보드를 칸·체크리스트까지 한 트랜잭션으로 넣는다. id는 새로 발급하고 새 보드 id 목록을 반환한다.
+  /// [replace]면 기존 보드를 모두 지운 뒤 넣는다(CASCADE로 칸·체크리스트도 삭제).
+  Future<List<int>> importBoards(List<MandalartBoard> boards, {required bool replace}) async {
+    final db = await database;
+    return db.transaction((txn) async {
+      if (replace) await txn.delete('mandalart_boards');
+      final ids = <int>[];
+      for (final board in boards) {
+        final boardId = await txn.insert(
+          'mandalart_boards',
+          board.toMap()..remove('id'),
+        );
+        ids.add(boardId);
+        for (final goal in board.subGoals) {
+          final items = goal.checklistItems;
+          // _syncGoalProgress는 updated_at을 덮어쓰므로 여기서 계산한다.
+          final progress = items.isEmpty
+              ? goal.progress
+              : items.where((i) => i.isDone).length * 100 ~/ items.length;
+          final goalMap = goal.toMap()
+            ..remove('id')
+            ..['parent_id'] = boardId
+            ..['progress'] = progress;
+          final goalId = await txn.insert('goals', goalMap);
+          for (final item in items) {
+            await txn.insert(
+              'checklist_items',
+              item.toMap()
+                ..remove('id')
+                ..['goal_id'] = goalId,
+            );
+          }
+        }
+      }
+      return ids;
+    });
+  }
+
   Future<int> updateMandalartBoard(MandalartBoard board) async {
     final db = await database;
     return await db.update(

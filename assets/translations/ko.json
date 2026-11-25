@@ -91,7 +91,9 @@
     "title": "공유",
     "generating": "이미지를 만드는 중…",
     "hint": "1:1 정사각형 이미지로 공유돼요. 이미지 저장은 공유 창에서 할 수 있어요.",
-    "button": "공유하기"
+    "button": "공유하기",
+    "style_light": "밝게",
+    "style_dark": "어둡게"
   },
   "settings": {
     "title": "설정",
@@ -101,7 +103,13 @@
     "theme_system": "시스템 설정 따름",
     "info_section": "정보",
     "about": "만다라트 소개",
-    "version": "앱 버전"
+    "version": "앱 버전",
+    "reminder_section": "알림",
+    "reminder_enabled": "매일 알림",
+    "reminder_time": "알림 시각",
+    "reminder_denied": "알림이 꺼져 있어요. 기기 설정에서 허용해 주세요.",
+    "data_section": "데이터",
+    "backup": "백업 및 복원"
   },
   "about": {
     "title": "만다라트 소개",
@@ -113,5 +121,25 @@
     "step2": "주변 8칸에 핵심 요소를 작성합니다",
     "step3": "요소별로 구체적인 실행 방법을 작성합니다",
     "step4": "진행 상황을 체크하며 목표를 달성합니다"
+  },
+  "reminder": {
+    "title": "오늘 목표 확인",
+    "body": "보드를 열어 오늘 한 일을 체크해 보세요."
+  },
+  "backup": {
+    "title": "백업 및 복원",
+    "export": "내보내기",
+    "export_hint": "체크리스트를 포함한 모든 보드를 파일 하나로 저장해요. iCloud Drive나 Google Drive처럼 안전한 곳에 보관하세요.",
+    "save": "파일로 저장",
+    "save_done": "백업 파일을 저장했어요",
+    "share": "공유하기",
+    "import": "불러오기",
+    "import_hint": "미니만다 백업 파일(.json)을 골라 보드를 되살려요.",
+    "import_merge": "기존 보드에 추가",
+    "import_replace": "기존 보드를 지우고 교체",
+    "import_confirm_title": "보드를 모두 교체할까요?",
+    "replace_confirm_body": "지금 있는 보드가 모두 삭제되고, 파일에 있는 보드 {count}개로 바뀌어요. 되돌릴 수 없어요.",
+    "import_done": "보드 {count}개를 불러왔어요",
+    "invalid_file": "미니만다 백업 파일이 아니에요"
   }
 }
