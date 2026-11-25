@@ -98,6 +98,10 @@
     "info_section": "Informations",
     "about": "À propos du Mandalart",
     "version": "Version de l'app",
+    "reminder_section": "Rappel",
+    "reminder_enabled": "Rappel quotidien",
+    "reminder_time": "Heure du rappel",
+    "reminder_denied": "Les notifications sont désactivées. Autorisez-les dans les réglages de l'appareil.",
     "data_section": "Données",
     "backup": "Sauvegarde et restauration"
   },
@@ -111,6 +115,10 @@
     "step2": "Écrivez les éléments clés dans les 8 cases autour",
     "step3": "Écrivez des actions concrètes pour chaque élément",
     "step4": "Suivez vos progrès et atteignez votre objectif"
+  },
+  "reminder": {
+    "title": "Vos objectifs du jour",
+    "body": "Ouvrez votre tableau et cochez ce que vous avez fait aujourd'hui."
   },
   "backup": {
     "title": "Sauvegarde et restauration",

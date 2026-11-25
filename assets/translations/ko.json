@@ -98,6 +98,10 @@
     "info_section": "정보",
     "about": "만다라트 소개",
     "version": "앱 버전",
+    "reminder_section": "알림",
+    "reminder_enabled": "매일 알림",
+    "reminder_time": "알림 시각",
+    "reminder_denied": "알림이 꺼져 있어요. 기기 설정에서 허용해 주세요.",
     "data_section": "데이터",
     "backup": "백업 및 복원"
   },
@@ -111,6 +115,10 @@
     "step2": "주변 8칸에 핵심 요소를 작성합니다",
     "step3": "요소별로 구체적인 실행 방법을 작성합니다",
     "step4": "진행 상황을 체크하며 목표를 달성합니다"
+  },
+  "reminder": {
+    "title": "오늘 목표 확인",
+    "body": "보드를 열어 오늘 한 일을 체크해 보세요."
   },
   "backup": {
     "title": "백업 및 복원",

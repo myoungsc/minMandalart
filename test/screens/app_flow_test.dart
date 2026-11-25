@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mandalart/core/ads/ads.dart';
 import 'package:mandalart/core/backup/backup_codec.dart';
 import 'package:mandalart/core/db/sqlite_helper.dart';
+import 'package:mandalart/core/notifications/reminder_service.dart';
 import 'package:mandalart/core/providers/goal_provider.dart';
 import 'package:mandalart/core/theme/app_theme.dart';
 import 'package:mandalart/core/widgets/mm_widgets.dart';
@@ -16,6 +18,39 @@ import 'package:mandalart/screens/home_screen.dart';
 import 'package:mandalart/screens/settings_screen.dart';
 import 'package:mandalart/screens/share_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+
+/// 실제 알림을 걸지 않고 호출만 센다.
+class _FakeReminder implements ReminderService {
+  bool grant = true;
+  int permissionRequests = 0;
+  final scheduled = <TimeOfDay>[];
+  int cancels = 0;
+
+  @override
+  Future<void> init() async {}
+
+  @override
+  Future<bool> requestPermission() async {
+    permissionRequests++;
+    return grant;
+  }
+
+  @override
+  Future<bool> hasPermission() async => grant;
+
+  @override
+  Future<void> schedule(
+    TimeOfDay time, {
+    required String title,
+    required String body,
+    required String channelName,
+  }) async {
+    scheduled.add(time);
+  }
+
+  @override
+  Future<void> cancel() async => cancels++;
+}
 
 /// 메모리에서 SQLiteHelper와 같은 규칙으로 동작하는 가짜 DB.
 class _FakeDb implements SQLiteHelper {
@@ -224,6 +259,7 @@ MandalartBoard _board({
 
 void main() {
   late _FakeDb db;
+  late _FakeReminder reminder;
 
   Future<void> pumpApp(
     WidgetTester tester, {
@@ -236,10 +272,12 @@ void main() {
     addTearDown(tester.view.reset);
 
     db = _FakeDb()..boards.addAll(boards);
+    reminder = _FakeReminder();
     final container = ProviderContainer(
       overrides: [
         databaseProvider.overrideWithValue(db),
         adsEnabledProvider.overrideWithValue(false),
+        reminderServiceProvider.overrideWithValue(reminder),
       ],
     );
     addTearDown(container.dispose);
@@ -750,6 +788,70 @@ void main() {
 
       await tapAndSettle(tester, find.text('settings.about'));
       expect(find.text('about.heading'), findsOneWidget);
+    });
+
+    Finder reminderSwitch() => find.byType(Switch);
+    bool switchOn(WidgetTester tester) => tester.widget<Switch>(reminderSwitch()).value;
+
+    testWidgets('알림을 켜면 권한을 묻고 한 번 예약하고, 끄면 한 번 취소한다', (tester) async {
+      await pumpApp(tester);
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+      expect(switchOn(tester), isFalse);
+      expect(reminder.permissionRequests, 0);
+
+      await tapAndSettle(tester, reminderSwitch());
+      expect(switchOn(tester), isTrue);
+      expect(reminder.permissionRequests, 1);
+      expect(reminder.scheduled, [const TimeOfDay(hour: 21, minute: 0)]);
+      expect(reminder.cancels, 0);
+
+      // 끌 때는 권한을 다시 묻지 않는다.
+      await tapAndSettle(tester, find.text('settings.reminder_enabled'));
+      expect(switchOn(tester), isFalse);
+      expect(reminder.permissionRequests, 1);
+      expect(reminder.scheduled, hasLength(1));
+      expect(reminder.cancels, 1);
+    });
+
+    testWidgets('권한을 거부하면 스위치가 꺼진 채로 남고 안내가 뜬다', (tester) async {
+      await pumpApp(tester);
+      reminder.grant = false;
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+
+      await tapAndSettle(tester, reminderSwitch());
+      expect(switchOn(tester), isFalse);
+      expect(find.text('settings.reminder_denied'), findsOneWidget);
+      expect(reminder.scheduled, isEmpty);
+    });
+
+    testWidgets('알림 시각은 켜져 있을 때만 고를 수 있고 바꾸면 다시 예약한다', (tester) async {
+      await pumpApp(tester);
+      await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+
+      await tapAndSettle(tester, find.text('settings.reminder_time'));
+      expect(find.byType(TimePickerDialog), findsNothing);
+
+      await tapAndSettle(tester, reminderSwitch());
+      await tapAndSettle(tester, find.text('settings.reminder_time'));
+      expect(find.byType(TimePickerDialog), findsOneWidget);
+
+      // 기본 21:00(오후 9시)에서 오전으로 바꾸면 09:00이 된다.
+      await tapAndSettle(tester, find.text('AM'));
+      await tapAndSettle(tester, find.text('OK'));
+      expect(reminder.scheduled.last, const TimeOfDay(hour: 9, minute: 0));
+      expect(reminder.scheduled, hasLength(2));
+    });
+
+    testWidgets('휴대폰이 아닌 플랫폼에서는 알림 설정을 보여 주지 않는다', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+      try {
+        await pumpApp(tester);
+        await tapAndSettle(tester, find.byIcon(Icons.settings_rounded));
+        expect(find.text('settings.reminder_section'), findsNothing);
+        expect(find.text('settings.theme_section'), findsOneWidget);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
     });
 
     testWidgets('백업 화면에 들어가고, 보드가 없으면 내보내기가 꺼진다', (tester) async {

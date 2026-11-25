@@ -98,6 +98,10 @@
     "info_section": "Información",
     "about": "Sobre Mandalart",
     "version": "Versión de la app",
+    "reminder_section": "Recordatorio",
+    "reminder_enabled": "Recordatorio diario",
+    "reminder_time": "Hora del recordatorio",
+    "reminder_denied": "Las notificaciones están desactivadas. Actívalas en los ajustes del dispositivo.",
     "data_section": "Datos",
     "backup": "Copia de seguridad"
   },
@@ -111,6 +115,10 @@
     "step2": "Escribe los elementos clave en las 8 casillas de alrededor",
     "step3": "Escribe acciones concretas para cada elemento",
     "step4": "Revisa tu progreso y alcanza tu objetivo"
+  },
+  "reminder": {
+    "title": "Revisa tus metas de hoy",
+    "body": "Abre tu tablero y marca lo que hiciste hoy."
   },
   "backup": {
     "title": "Copia de seguridad",

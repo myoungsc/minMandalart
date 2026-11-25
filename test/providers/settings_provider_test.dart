@@ -139,5 +139,32 @@ void main() {
       final container = await launch();
       expect(container.read(settingsProvider).themeMode, ThemeMode.light);
     });
+
+    test('알림은 기본으로 꺼져 있고 시각은 21:00이다', () async {
+      SharedPreferences.setMockInitialValues({});
+      final settings = (await launch()).read(settingsProvider);
+      expect(settings.reminderEnabled, isFalse);
+      expect(settings.reminderTime, const TimeOfDay(hour: 21, minute: 0));
+    });
+
+    test('알림 켜기와 시각은 앱을 다시 켜도 유지된다', () async {
+      SharedPreferences.setMockInitialValues({});
+      final first = await launch();
+      first.read(settingsProvider.notifier)
+        ..setReminderEnabled(true)
+        ..setReminderTime(const TimeOfDay(hour: 7, minute: 30));
+
+      final second = (await launch()).read(settingsProvider);
+      expect(second.reminderEnabled, isTrue);
+      expect(second.reminderTime, const TimeOfDay(hour: 7, minute: 30));
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getInt('reminder_minutes'), 7 * 60 + 30);
+    });
+
+    test('저장된 알림 시각이 범위를 벗어나면 21:00으로 시작한다', () async {
+      SharedPreferences.setMockInitialValues({'reminder_minutes': 24 * 60});
+      final settings = (await launch()).read(settingsProvider);
+      expect(settings.reminderTime, const TimeOfDay(hour: 21, minute: 0));
+    });
   });
 }
