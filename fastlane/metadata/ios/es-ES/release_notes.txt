@@ -1,4 +1,6 @@
-• Hemos añadido la copia de seguridad (Ajustes > Copia de seguridad).
-  - Guarda todos tus tableros en un archivo o compártelo con otra app
-  - Carga una copia para añadirla a tus tableros o para reemplazar tus tableros
-• Las copias se guardan solo donde tú elijas y nunca se envían al desarrollador.
+• Hemos añadido un recordatorio diario (Ajustes > Recordatorio).
+  - Recibe un aviso al día, «Revisa tus metas de hoy», a la hora que elijas
+  - Solo pedimos permiso de notificaciones cuando lo activas
+• Ahora puedes poner una fecha límite a cada submeta.
+  - Las casillas muestran los días que quedan y se destacan cuando la fecha ha pasado
+• Al compartir un tablero, puedes elegir una imagen clara u oscura.
